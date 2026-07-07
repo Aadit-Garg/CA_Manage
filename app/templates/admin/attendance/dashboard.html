@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Attendance Dashboard — CA Manage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Attendance Dashboard</h3>
+        <p class="text-muted small mb-0">Daily attendance overview for all employees</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.create_attendance') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Add Record
+        </a>
+    </div>
+</div>
+
+<!-- Date Navigation -->
+<div class="ca-card mb-4">
+    <div class="ca-card-body d-flex justify-content-between align-items-center py-3">
+        <a href="#" id="prevDayBtn" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        <div class="text-center">
+            <form class="d-inline" id="datePickerForm">
+                <input type="date" name="date" class="form-control form-control-sm d-inline-block" 
+                       style="width: auto;" value="{{ view_date.strftime('%Y-%m-%d') }}" 
+                       onchange="window.location.href='{{ url_for('admin.attendance_dashboard') }}?date=' + this.value">
+            </form>
+            <p class="mb-0 small text-muted mt-1">{{ view_date.strftime('%A, %B %d, %Y') }}</p>
+        </div>
+        <a href="#" class="btn btn-outline-secondary btn-sm" id="nextDayBtn">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="ca-card">
+            <div class="ca-card-body text-center py-3">
+                <h3 class="fw-bold mb-0">{{ stats.total }}</h3>
+                <p class="text-muted small mb-0">Total Employees</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ca-card">
+            <div class="ca-card-body text-center py-3">
+                <h3 class="fw-bold mb-0 text-success">{{ stats.present }}</h3>
+                <p class="text-muted small mb-0">Present</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ca-card">
+            <div class="ca-card-body text-center py-3">
+                <h3 class="fw-bold mb-0 text-primary">{{ stats.working }}</h3>
+                <p class="text-muted small mb-0">Working Now</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ca-card">
+            <div class="ca-card-body text-center py-3">
+                <h3 class="fw-bold mb-0 text-danger">{{ stats.absent }}</h3>
+                <p class="text-muted small mb-0">Absent</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="ca-card">
+    <div class="ca-card-header">Employee Attendance — {{ view_date.strftime('%b %d, %Y') }}</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Employee</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Punch In</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Punch Out</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Hours</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Status</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Location</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% for row in attendance_rows %}
+                <tr>
+                    <td class="ps-4">
+                        <span class="fw-medium text-dark">{{ row.employee.user.full_name }}</span>
+                    </td>
+                    <td>
+                        {% if row.record and row.record.punch_in_time %}
+                            <span class="text-success fw-medium">{{ row.record.punch_in_time.strftime('%I:%M %p') }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.record and row.record.punch_out_time %}
+                            <span class="text-danger fw-medium">{{ row.record.punch_out_time.strftime('%I:%M %p') }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center fw-bold">
+                        {% if row.record and row.record.total_hours is not none %}
+                            {{ row.record.total_hours }}h
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if row.record %}
+                            {% if row.record.status == 'Present' %}
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-1">Present</span>
+                            {% elif row.record.status == 'Corrected' %}
+                                <span class="badge bg-info bg-opacity-10 text-info px-3 py-1">Corrected</span>
+                            {% elif row.record.status == 'Half Day' %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1">Half Day</span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1">{{ row.record.status }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-1">Absent</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if row.record and row.record.location_status == 'Captured' %}
+                            <a href="https://www.google.com/maps?q={{ row.record.latitude }},{{ row.record.longitude }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">
+                                <i class="bi bi-geo-alt-fill me-1"></i>Map
+                            </a>
+                        {% elif row.record and row.record.location_status == 'Denied' %}
+                            <span class="text-warning small"><i class="bi bi-geo-alt-fill"></i> Denied</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        {% if row.record %}
+                            <a href="{{ url_for('admin.edit_attendance', id=row.record.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        {% else %}
+                            <span class="text-muted small">No record</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Date navigation
+document.addEventListener('DOMContentLoaded', function() {
+    const viewDate = new Date('{{ view_date.strftime("%Y-%m-%d") }}');
+    
+    const prevDate = new Date(viewDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    document.getElementById('prevDayBtn').href = 
+        '{{ url_for("admin.attendance_dashboard") }}?date=' + prevDate.toISOString().slice(0,10);
+
+    const nextDate = new Date(viewDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    document.getElementById('nextDayBtn').href = 
+        '{{ url_for("admin.attendance_dashboard") }}?date=' + nextDate.toISOString().slice(0,10);
+});
+</script>
+{% endblock %}

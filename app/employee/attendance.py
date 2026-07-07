@@ -20,8 +20,13 @@ def punch():
     now = datetime.now(timezone.utc)
     today = now.date()
     
+    from ..models.employee import Employee
+    emp = Employee.query.filter_by(user_id=current_user.id).first()
+    if not emp:
+        return jsonify({'error': 'Employee profile not found.'}), 404
+        
     # Check if there is already an attendance record for today
-    record = Attendance.query.filter_by(employee_id=current_user.id, date=today).first()
+    record = Attendance.query.filter_by(employee_id=emp.id, date=today).first()
     
     action = data.get('action') # 'in' or 'out'
     lat = data.get('latitude')
@@ -36,7 +41,7 @@ def punch():
             return jsonify({'error': 'Already punched in today.'}), 400
             
         if not record:
-            record = Attendance(employee_id=current_user.id, date=today)
+            record = Attendance(employee_id=emp.id, date=today)
             db.session.add(record)
             
         record.punch_in_time = now
@@ -75,6 +80,12 @@ def attendance_history():
     """
     View attendance history for the logged-in employee.
     """
+    from ..models.employee import Employee
+    emp = Employee.query.filter_by(user_id=current_user.id).first()
+    if not emp:
+        flash("Employee profile not found.", "danger")
+        return redirect(url_for('employee.dashboard'))
+        
     page = request.args.get('page', 1, type=int)
-    records = Attendance.query.filter_by(employee_id=current_user.id).order_by(Attendance.date.desc()).paginate(page=page, per_page=15)
+    records = Attendance.query.filter_by(employee_id=emp.id).order_by(Attendance.date.desc()).paginate(page=page, per_page=15)
     return render_template('employee/attendance_history.html', records=records)

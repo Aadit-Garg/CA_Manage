@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Edit Attendance — CA Manage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Edit Attendance Record</h3>
+        <p class="text-muted small mb-0">
+            {% if employee %}{{ employee.user.full_name }}{% endif %} — {{ record.date.strftime('%A, %B %d, %Y') }}
+        </p>
+    </div>
+    <a href="{{ url_for('admin.attendance_dashboard', date=record.date.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="ca-card">
+    <div class="ca-card-body">
+        <form method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Punch In Time</label>
+                    <input type="datetime-local" name="punch_in_time" class="form-control"
+                           value="{{ record.punch_in_time.strftime('%Y-%m-%dT%H:%M') if record.punch_in_time else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Punch Out Time</label>
+                    <input type="datetime-local" name="punch_out_time" class="form-control"
+                           value="{{ record.punch_out_time.strftime('%Y-%m-%dT%H:%M') if record.punch_out_time else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Status</label>
+                    <select name="status" class="form-select">
+                        {% for s in ['Present', 'Half Day', 'Absent', 'Leave', 'Holiday', 'Corrected'] %}
+                        <option value="{{ s }}" {% if record.status == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Total Hours (auto-calculated)</label>
+                    <input type="text" class="form-control" value="{{ record.total_hours or '—' }}" disabled>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-medium">Notes / Reason for Correction</label>
+                    <textarea name="notes" class="form-control" rows="3" placeholder="Explain the reason for this correction...">{{ record.notes or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Current Record Info -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-1"></i>Current Record Info</h6>
+                <div class="row small text-muted">
+                    <div class="col-md-4"><strong>Location:</strong> {{ record.location_status or '—' }}</div>
+                    <div class="col-md-4"><strong>IP:</strong> {{ record.ip_address or '—' }}</div>
+                    <div class="col-md-4"><strong>Device:</strong> {{ (record.device_info or '—')[:50] }}</div>
+                    {% if record.latitude %}
+                    <div class="col-md-6 mt-2">
+                        <strong>GPS:</strong> {{ record.latitude }}, {{ record.longitude }} (accuracy: {{ record.gps_accuracy }}m)
+                        <a href="https://www.google.com/maps?q={{ record.latitude }},{{ record.longitude }}" target="_blank" class="ms-1">
+                            <i class="bi bi-geo-alt-fill text-primary"></i>View on Map
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Save Correction
+                </button>
+                <a href="{{ url_for('admin.attendance_dashboard', date=record.date.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -38,8 +38,13 @@ def dashboard():
     ).count()
 
     from datetime import datetime, timezone
+    from ..models.employee import Employee
     today = datetime.now(timezone.utc).date()
-    attendance_record = Attendance.query.filter_by(employee_id=current_user.id, date=today).first()
+    
+    emp = Employee.query.filter_by(user_id=current_user.id).first()
+    attendance_record = None
+    if emp:
+        attendance_record = Attendance.query.filter_by(employee_id=emp.id, date=today).first()
     
     if attendance_record:
         if attendance_record.punch_out_time:

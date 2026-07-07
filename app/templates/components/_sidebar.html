@@ -20,6 +20,9 @@
     <a href="{{ url_for('employee.requests_list') }}" class="ca-nav-item {% if request.endpoint == 'employee.requests_list' %}active{% endif %}">
         <i class="bi bi-clock-history"></i> My Requests
     </a>
+    <a href="{{ url_for('employee.attendance_history') }}" class="ca-nav-item {% if request.endpoint == 'employee.attendance_history' %}active{% endif %}">
+        <i class="bi bi-calendar-check"></i> Attendance
+    </a>
     {% elif current_user.role == 'client' %}
     <a href="{{ url_for('client_portal.view_profile') }}" class="ca-nav-item {% if request.endpoint == 'client_portal.view_profile' %}active{% endif %}">
         <i class="bi bi-person-circle"></i> My Profile
@@ -48,6 +51,9 @@
     </a>
     <a href="{{ url_for('admin.approvals_list') }}" class="ca-nav-item {% if request.endpoint == 'admin.approvals_list' %}active{% endif %}">
         <i class="bi bi-shield-check"></i> Pending Approvals
+    </a>
+    <a href="{{ url_for('admin.attendance_dashboard') }}" class="ca-nav-item {% if request.endpoint in ['admin.attendance_dashboard', 'admin.edit_attendance', 'admin.create_attendance'] %}active{% endif %}">
+        <i class="bi bi-calendar-check"></i> Attendance
     </a>
     {% endif %}
 
