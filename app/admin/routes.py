@@ -16,6 +16,7 @@ from ..models.employee import Employee
 from ..models.document import Document
 from ..models.document_version import DocumentVersion
 from ..models.approval import ApprovalRequest
+from ..models.upload_session import UploadSession
 from ..utils.logging import get_logger, log_user_action
 from ..utils.cloudinary_helper import upload_pdf, delete_pdf
 from ..utils.import_helper import generate_excel_template, parse_and_validate_excel
@@ -42,11 +43,13 @@ def dashboard():
 
     # Recent activity logs or requests
     recent_requests = ApprovalRequest.query.order_by(ApprovalRequest.created_at.desc()).limit(5).all()
+    recent_upload_sessions = UploadSession.query.order_by(UploadSession.created_at.desc()).limit(5).all()
 
     return render_template(
         'admin/dashboard.html',
         stats=stats,
         recent_requests=recent_requests,
+        recent_upload_sessions=recent_upload_sessions
     )
 
 
@@ -244,7 +247,8 @@ def clients_list():
                 ClientProfile.phone.ilike(f'%{search}%'),
                 ClientProfile.client_code.ilike(f'%{search}%'),
                 ClientProfile.PAN.ilike(f'%{search}%'),
-                ClientProfile.GST.ilike(f'%{search}%')
+                ClientProfile.GST.ilike(f'%{search}%'),
+                ClientProfile.upload_id.ilike(f'%{search}%')
             )
         )
 

@@ -94,4 +94,39 @@
         </table>
     </div>
 </div>
+
+<!-- Recent Upload Sessions -->
+<div class="ca-card mt-4">
+    <div class="ca-card-header d-flex justify-content-between align-items-center">
+        <span>My Recent Bulk Uploads</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Date</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Total Files</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Success (Sent for Approval)</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Failed</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if recent_upload_sessions %}
+                    {% for session in recent_upload_sessions %}
+                    <tr>
+                        <td class="ps-4 fw-medium text-dark">{{ session.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                        <td class="text-center fw-bold">{{ session.total_files }}</td>
+                        <td class="text-center text-primary fw-bold">{{ session.approval_requests_created }}</td>
+                        <td class="text-center text-danger fw-bold">{{ session.failed_uploads }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">No bulk uploads recorded.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

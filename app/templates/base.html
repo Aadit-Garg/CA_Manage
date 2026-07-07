@@ -12,6 +12,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    
+    <!-- Turbo for instant page transitions and loading bar -->
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@7.3.0/dist/turbo.es2017-umd.js" defer></script>
+    <style>
+        .turbo-progress-bar {
+            height: 4px;
+            background-color: #0d6efd; /* Bootstrap primary blue */
+            z-index: 9999;
+        }
+    </style>
 </head>
 <body>
 

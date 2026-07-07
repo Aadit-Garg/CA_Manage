@@ -13,6 +13,7 @@ from ..utils.cloudinary_helper import upload_pdf
 from ..models.client import ClientProfile
 from ..models.document import Document
 from ..models.approval import ApprovalRequest
+from ..models.upload_session import UploadSession
 from ..extensions import db
 from werkzeug.security import generate_password_hash
 from . import employee_bp
@@ -50,11 +51,16 @@ def dashboard():
         employee_id=current_user.id
     ).order_by(ApprovalRequest.created_at.desc()).limit(5).all()
 
+    recent_upload_sessions = UploadSession.query.filter_by(
+        user_id=current_user.id
+    ).order_by(UploadSession.created_at.desc()).limit(5).all()
+
     return render_template(
         'employee/dashboard.html',
         stats=stats,
         assigned_clients=assigned_clients,
-        recent_requests=recent_requests
+        recent_requests=recent_requests,
+        recent_upload_sessions=recent_upload_sessions
     )
 
 
@@ -76,7 +82,8 @@ def clients_list():
                 ClientProfile.phone.ilike(f'%{search}%'),
                 ClientProfile.client_code.ilike(f'%{search}%'),
                 ClientProfile.PAN.ilike(f'%{search}%'),
-                ClientProfile.GST.ilike(f'%{search}%')
+                ClientProfile.GST.ilike(f'%{search}%'),
+                ClientProfile.upload_id.ilike(f'%{search}%')
             )
         )
 
