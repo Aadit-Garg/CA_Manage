@@ -8,6 +8,9 @@
         <p class="text-muted small mb-0">Daily attendance overview for all employees</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.export_attendance', month=view_date.strftime('%Y-%m')) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export Month
+        </a>
         <a href="{{ url_for('admin.create_attendance') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-circle me-1"></i>Add Record
         </a>

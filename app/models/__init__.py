@@ -14,5 +14,11 @@ from .attendance import Attendance
 from .timeline import TimelineEvent
 from .notification import Notification
 from .push_subscription import PushSubscription
+from .audit import AuditLog
+from .saved_filter import SavedFilter
 
-__all__ = ['User', 'ClientProfile', 'Employee', 'Document', 'DocumentVersion', 'ApprovalRequest', 'UploadSession', 'UploadSessionFile', 'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription']
+__all__ = [
+    'User', 'ClientProfile', 'Employee', 
+    'Document', 'DocumentVersion', 'ApprovalRequest', 'UploadSession', 'UploadSessionFile',
+    'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription', 'AuditLog', 'SavedFilter'
+]

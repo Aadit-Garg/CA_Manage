@@ -55,6 +55,9 @@
     <a href="{{ url_for('admin.attendance_dashboard') }}" class="ca-nav-item {% if request.endpoint in ['admin.attendance_dashboard', 'admin.edit_attendance', 'admin.create_attendance'] %}active{% endif %}">
         <i class="bi bi-calendar-check"></i> Attendance
     </a>
+    <a href="{{ url_for('admin.audit_logs') }}" class="ca-nav-item {% if request.endpoint == 'admin.audit_logs' %}active{% endif %}">
+        <i class="bi bi-journal-code"></i> Audit Logs
+    </a>
     {% endif %}
 
     {% if current_user.role in ['admin', 'employee'] %}

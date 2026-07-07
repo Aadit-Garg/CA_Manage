@@ -5,10 +5,10 @@
 
 <div class="d-flex align-items-center gap-4">
     <!-- Search Bar -->
-    <div class="position-relative" style="width: 300px;">
+    <form class="position-relative" style="width: 300px;" method="GET" action="{{ url_for('admin.global_search') if current_user.role == 'admin' else '#' }}" data-turbo="true">
         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-        <input type="text" class="form-control ps-5 bg-light border-0" placeholder="Search everywhere...">
-    </div>
+        <input type="text" name="q" class="form-control ps-5 bg-light border-0" placeholder="Search everywhere...">
+    </form>
 
     <!-- Notification Dropdown -->
     <div class="dropdown">
@@ -43,7 +43,13 @@
             {% else %}
                 <li><span class="dropdown-item text-muted text-center">No notifications yet.</span></li>
             {% endif %}
-            <li><hr class="dropdown-divider"></li>
+            <li><hr class="dropdown-divider mb-0"></li>
+            <li>
+                <a href="{{ url_for('auth.notification_center') }}" class="dropdown-item text-center text-primary fw-medium py-2">
+                    View All Notifications
+                </a>
+            </li>
+            <li><hr class="dropdown-divider mt-0"></li>
             <li class="px-3 py-2">
                 <button id="enableWebPushBtn" class="btn btn-sm btn-outline-primary w-100" onclick="subscribeToPush()">
                     <i class="bi bi-bell-fill me-1"></i> Enable OS Notifications
@@ -56,7 +62,11 @@
 <script>
 function markRead(event, notifId, link) {
     event.preventDefault();
-    fetch(`/auth/notifications/read/${notifId}`, { method: 'POST' })
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    fetch(`/auth/notifications/read/${notifId}`, { 
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken }
+    })
     .then(() => {
         if(link && link !== '#') window.location.href = link;
         else location.reload();
@@ -65,7 +75,11 @@ function markRead(event, notifId, link) {
 function markAllRead(event) {
     event.preventDefault();
     event.stopPropagation();
-    fetch(`/auth/notifications/read-all`, { method: 'POST' })
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    fetch(`/auth/notifications/read-all`, { 
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken }
+    })
     .then(() => location.reload());
 }
 
@@ -110,10 +124,14 @@ async function subscribeToPush() {
             applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
         });
 
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         await fetch('/auth/notifications/subscribe', {
             method: 'POST',
             body: JSON.stringify(subscription),
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
         });
 
         btn.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Enabled';

@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Notification Center{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0 fw-bold">Notification Center</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="markAllAsRead()">
+            <i class="bi bi-check2-all me-1"></i> Mark All as Read
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <!-- Sidebar Navigation -->
+        <div class="ca-card">
+            <div class="ca-card-body p-0">
+                <div class="list-group list-group-flush border-0">
+                    <a href="{{ url_for('auth.notification_center') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 {% if not category %}active bg-primary text-white border-primary{% else %}text-secondary{% endif %}">
+                        <span><i class="bi bi-inbox me-2"></i> All Notifications</span>
+                    </a>
+                    <a href="{{ url_for('auth.notification_center', category='system') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 {% if category == 'system' %}active bg-primary text-white border-primary{% else %}text-secondary{% endif %}">
+                        <span><i class="bi bi-hdd-network me-2"></i> System</span>
+                    </a>
+                    <a href="{{ url_for('auth.notification_center', category='documents') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 {% if category == 'documents' %}active bg-primary text-white border-primary{% else %}text-secondary{% endif %}">
+                        <span><i class="bi bi-file-earmark-text me-2"></i> Documents</span>
+                    </a>
+                    <a href="{{ url_for('auth.notification_center', category='approvals') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 {% if category == 'approvals' %}active bg-primary text-white border-primary{% else %}text-secondary{% endif %}">
+                        <span><i class="bi bi-shield-check me-2"></i> Approvals</span>
+                    </a>
+                    <a href="{{ url_for('auth.notification_center', category='attendance') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 {% if category == 'attendance' %}active bg-primary text-white border-primary{% else %}text-secondary{% endif %}">
+                        <span><i class="bi bi-calendar-check me-2"></i> Attendance</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="ca-card">
+            <div class="ca-card-body p-0">
+                {% if notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notif in notifications %}
+                    <div class="list-group-item py-4 px-4 position-relative hover-bg-light transition-all" id="notif-{{ notif.id }}">
+                        <div class="d-flex gap-3">
+                            <!-- Icon Indicator -->
+                            <div class="flex-shrink-0">
+                                {% if notif.category == 'documents' %}
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-file-earmark-text fs-5"></i>
+                                    </div>
+                                {% elif notif.category == 'approvals' %}
+                                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-shield-check fs-5"></i>
+                                    </div>
+                                {% elif notif.category == 'attendance' %}
+                                    <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-calendar-check fs-5"></i>
+                                    </div>
+                                {% elif notif.category == 'system' %}
+                                    <div class="rounded-circle bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-hdd-network fs-5"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-bell fs-5"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 {% if not notif.is_read %}fw-bold text-dark{% else %}text-muted{% endif %}">
+                                        {{ notif.title or (notif.category|title if notif.category else 'Notification') }}
+                                        {% if not notif.is_read %}
+                                        <span class="badge bg-primary ms-2 rounded-pill" style="font-size: 0.65rem;">New</span>
+                                        {% endif %}
+                                        {% if notif.priority == 'high' %}
+                                        <span class="badge bg-danger ms-1 rounded-pill" style="font-size: 0.65rem;">High Priority</span>
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted text-nowrap ms-3">{{ notif.created_at.strftime('%b %d, %I:%M %p') }}</small>
+                                </div>
+                                
+                                <p class="mb-2 {% if not notif.is_read %}text-dark{% else %}text-muted{% endif %} fs-6">{{ notif.message }}</p>
+                                
+                                <div class="d-flex gap-2">
+                                    {% if notif.link %}
+                                        <a href="{{ notif.link }}" class="btn btn-sm btn-light border" onclick="markReadAndGo({{ notif.id }}, event)">View Details</a>
+                                    {% endif %}
+                                    {% if not notif.is_read %}
+                                        <button class="btn btn-sm btn-link text-decoration-none text-muted px-0" onclick="markAsRead({{ notif.id }})">Mark as read</button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-link text-decoration-none text-danger px-0 ms-auto" onclick="deleteNotification({{ notif.id }})"><i class="bi bi-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="py-5 text-center text-muted">
+                    <i class="bi bi-bell-slash fs-1 d-block mb-3 opacity-50"></i>
+                    <h5>No notifications found</h5>
+                    <p class="small">You're all caught up!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Notification pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('auth.notification_center', page=pagination.prev_num, category=category) }}">Previous</a>
+                </li>
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('auth.notification_center', page=page_num, category=category) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('auth.notification_center', page=pagination.next_num, category=category) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+async function markAsRead(id) {
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const res = await fetch(`{{ url_for("auth.mark_notification_read", id=0) }}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        if(res.ok) location.reload();
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function markAllAsRead() {
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const res = await fetch(`{{ url_for("auth.mark_all_notifications_read") }}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        if(res.ok) location.reload();
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function deleteNotification(id) {
+    if(!confirm("Delete this notification?")) return;
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const res = await fetch(`{{ url_for("auth.delete_notification", id=0) }}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        if(res.ok) {
+            const el = document.getElementById(`notif-${id}`);
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            }
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function markReadAndGo(id, e) {
+    // If it's not opened in new tab, mark read first
+    if (!e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        const url = e.currentTarget.href;
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            await fetch(`{{ url_for("auth.mark_notification_read", id=0) }}`.replace('0', id), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+        } catch(e) {}
+        window.location.href = url;
+    }
+}
+</script>
+<style>
+.hover-bg-light:hover {
+    background-color: #f8f9fa !important;
+}
+</style>
+{% endblock %}

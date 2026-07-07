@@ -39,7 +39,7 @@ def send_web_push(subscription, payload):
         logger.error(f"Web push error: {str(e)}")
         return False
 
-def create_notification(user_id, message, link=None):
+def create_notification(user_id, message, link=None, title=None, category='system', priority='normal', entity_type=None, entity_id=None):
     """
     Creates an in-app notification and attempts to send a Web Push notification to all
     registered devices for the user.
@@ -48,7 +48,12 @@ def create_notification(user_id, message, link=None):
         # Create In-App Notification
         notification = Notification(
             user_id=user_id,
+            title=title,
             message=message,
+            category=category,
+            priority=priority,
+            entity_type=entity_type,
+            entity_id=str(entity_id) if entity_id else None,
             link=link
         )
         db.session.add(notification)
@@ -56,7 +61,7 @@ def create_notification(user_id, message, link=None):
         
         # Prepare Push Payload
         payload = {
-            "title": "CA Manage Notification",
+            "title": title or "CA Manage Notification",
             "body": message,
             "url": link or "/"
         }
@@ -66,15 +71,19 @@ def create_notification(user_id, message, link=None):
         for sub in subscriptions:
             send_web_push(sub, payload)
             
-        logger.info(f"[NOTIFICATION] Sent to user_id={user_id}")
+        logger.info(f"[NOTIFICATION] Sent to user_id={user_id} category={category}")
     except Exception as e:
         logger.error(f"Failed to create notification: {e}")
 
-def notify_admins(message, link=None):
+def notify_admins(message, link=None, title=None, category='system', priority='normal', entity_type=None, entity_id=None):
     """
     Sends a notification to all active administrators.
     """
     from ..models.user import User
     admins = User.query.filter_by(role=User.ROLE_ADMIN, is_active=True).all()
     for admin in admins:
-        create_notification(admin.id, message, link)
+        create_notification(
+            admin.id, message, link=link, title=title, 
+            category=category, priority=priority, 
+            entity_type=entity_type, entity_id=entity_id
+        )

@@ -54,6 +54,11 @@ def punch():
         record.ip_address = ip_address
         
         db.session.commit()
+        
+        from flask import current_app
+        from ..utils.logging import log_user_action
+        log_user_action(current_app.logger, current_user, 'punch_in', module='attendance', entity_type='Attendance', entity_id=record.id, description=f'Punched in at {now.strftime("%I:%M %p")}')
+        
         return jsonify({'message': 'Punched in successfully.', 'time': now.strftime('%I:%M %p')}), 200
         
     elif action == 'out':
@@ -65,10 +70,17 @@ def punch():
             
         record.punch_out_time = now
         # Calculate total hours
-        td = record.punch_out_time - record.punch_in_time
+        # Make both naive to avoid offset-naive vs offset-aware TypeError
+        t_out = record.punch_out_time.replace(tzinfo=None)
+        t_in = record.punch_in_time.replace(tzinfo=None)
+        td = t_out - t_in
         record.total_hours = round(td.total_seconds() / 3600.0, 2)
         
         db.session.commit()
+        
+        from flask import current_app
+        from ..utils.logging import log_user_action
+        log_user_action(current_app.logger, current_user, 'punch_out', module='attendance', entity_type='Attendance', entity_id=record.id, description=f'Punched out at {now.strftime("%I:%M %p")}')
         return jsonify({'message': 'Punched out successfully.', 'time': now.strftime('%I:%M %p')}), 200
         
     return jsonify({'error': 'Invalid action.'}), 400

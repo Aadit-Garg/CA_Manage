@@ -43,15 +43,37 @@ def dashboard():
         'recent_documents': Document.query.filter_by(status='Active').order_by(Document.created_at.desc()).limit(5).all(),
     }
 
-    # Recent activity logs or requests
-    recent_requests = ApprovalRequest.query.order_by(ApprovalRequest.created_at.desc()).limit(5).all()
-    recent_upload_sessions = UploadSession.query.order_by(UploadSession.created_at.desc()).limit(5).all()
+    # Activity Feed (Recent Audit Logs)
+    from ..models.audit import AuditLog
+    recent_activity = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(8).all()
+    
+    # Analytics - Attendance Data (Last 7 Days)
+    from datetime import datetime, timedelta, timezone
+    today = datetime.now(timezone.utc).date()
+    days = [(today - timedelta(days=i)) for i in range(6, -1, -1)]
+    
+    from ..models.attendance import Attendance
+    attendance_labels = [d.strftime('%b %d') for d in days]
+    attendance_data = []
+    
+    for d in days:
+        count = Attendance.query.filter(Attendance.date == d, Attendance.status == 'Present').count()
+        attendance_data.append(count)
+        
+    chart_data = {
+        'attendance': {
+            'labels': attendance_labels,
+            'data': attendance_data
+        }
+    }
 
     return render_template(
         'admin/dashboard.html',
         stats=stats,
         recent_requests=recent_requests,
-        recent_upload_sessions=recent_upload_sessions
+        recent_upload_sessions=recent_upload_sessions,
+        recent_activity=recent_activity,
+        chart_data=chart_data
     )
 
 
@@ -83,7 +105,7 @@ def create_system_admin():
         db.session.add(user)
         db.session.commit()
 
-        log_user_action(logger, current_user, 'create_admin', {'admin_email': user.email})
+        log_user_action(logger, current_user, 'create_admin', module='admin', description=f'Created admin {user.email}')
         flash(f"System Administrator {user.full_name} created. Default password: 'Admin@123'.", 'success')
         return redirect(url_for('admin.system_admins_list'))
 
@@ -152,7 +174,7 @@ def create_employee():
         db.session.add(employee)
         db.session.commit()
 
-        log_user_action(logger, current_user, 'create_employee', {'employee_email': employee.email})
+        log_user_action(logger, current_user, 'create_employee', module='employees', entity_type='Employee', entity_id=employee.id, description=f'Created employee {employee.email}')
         flash(f"Employee {employee.full_name} created. Default password: 'Employee@123'.", 'success')
         return redirect(url_for('admin.employees_list'))
 
@@ -174,7 +196,7 @@ def edit_employee(id):
         user.phone = employee.phone
         db.session.commit()
 
-        log_user_action(logger, current_user, 'edit_employee', {'employee_email': employee.email})
+        log_user_action(logger, current_user, 'edit_employee', module='employees', entity_type='Employee', entity_id=employee.id, description=f'Edited employee {employee.email}')
         flash(f"Employee {employee.full_name} updated successfully.", 'success')
         return redirect(url_for('admin.employees_list'))
 
@@ -199,7 +221,7 @@ def toggle_employee_status(id):
         msg = f"Employee {employee.full_name} has been enabled."
     db.session.commit()
 
-    log_user_action(logger, current_user, action, {'employee_email': employee.email})
+    log_user_action(logger, current_user, action, module='employees', entity_type='Employee', entity_id=employee.id, description=f'{action} on employee {employee.email}')
     flash(msg, 'success')
     return redirect(url_for('admin.employees_list'))
 
@@ -214,7 +236,7 @@ def reset_employee_password(id):
         employee.user.set_password(form.password.data)
         db.session.commit()
 
-        log_user_action(logger, current_user, 'reset_employee_password', {'employee_email': employee.email})
+        log_user_action(logger, current_user, 'reset_employee_password', module='employees', entity_type='Employee', entity_id=employee.id, description=f'Reset password for employee {employee.email}')
         flash(f"Password reset successful for {employee.full_name}.", 'success')
         return redirect(url_for('admin.employees_list'))
 
@@ -313,7 +335,7 @@ def create_client():
         )
         db.session.commit()
 
-        log_user_action(logger, current_user, 'create_client', {'client_email': profile.email})
+        log_user_action(logger, current_user, 'create_client', module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'Created client {profile.email}')
         flash(f"Client {profile.full_name} created. Default password: 'Client@123'.", 'success')
         return redirect(url_for('admin.clients_list'))
 
@@ -346,7 +368,7 @@ def edit_client(id):
         )
         db.session.commit()
 
-        log_user_action(logger, current_user, 'edit_client', {'client_email': profile.email})
+        log_user_action(logger, current_user, 'edit_client', module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'Edited client {profile.email}')
         flash(f"Client {profile.full_name} updated successfully.", 'success')
         return redirect(url_for('admin.clients_list'))
 
@@ -376,7 +398,7 @@ def toggle_client_status(id):
     )
     db.session.commit()
 
-    log_user_action(logger, current_user, action, {'client_email': profile.email})
+    log_user_action(logger, current_user, action, module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'{action} on client {profile.email}')
     flash(msg, 'success')
     return redirect(url_for('admin.clients_list'))
 
@@ -397,7 +419,7 @@ def delete_client(id):
     )
     db.session.commit()
 
-    log_user_action(logger, current_user, 'disable_client', {'client_email': profile.email})
+    log_user_action(logger, current_user, 'disable_client', module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'Disabled client {profile.email}')
     flash(f"Client {profile.full_name} soft-deleted.", 'success')
     return redirect(url_for('admin.clients_list'))
 
@@ -410,7 +432,7 @@ def restore_client(id):
     profile.user.is_active = True
     db.session.commit()
 
-    log_user_action(logger, current_user, 'restore_client', {'client_email': profile.email})
+    log_user_action(logger, current_user, 'restore_client', module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'Restored client {profile.email}')
     flash(f"Client {profile.full_name} restored.", 'success')
     return redirect(url_for('admin.clients_list', status='Inactive'))
 
@@ -424,7 +446,7 @@ def reset_client_password(id):
         profile.user.set_password(form.password.data)
         db.session.commit()
 
-        log_user_action(logger, current_user, 'reset_client_password', {'client_email': profile.email})
+        log_user_action(logger, current_user, 'reset_client_password', module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'Reset password for client {profile.email}')
         flash(f"Password reset successful for {profile.full_name}.", 'success')
         return redirect(url_for('admin.clients_list'))
 
@@ -533,7 +555,7 @@ def commit_import():
         success_count += 1
         
     db.session.commit()
-    log_user_action(logger, current_user, 'bulk_import_clients', {'count': success_count})
+    log_user_action(logger, current_user, 'bulk_import_clients', module='clients', description=f'Bulk imported {success_count} clients')
     
     flash(f"Import complete: {success_count} clients successfully imported. {duplicate_count} skipped as duplicates.", 'success')
     return redirect(url_for('admin.clients_list'))
@@ -649,7 +671,7 @@ def upload_document():
             )
             db.session.commit()
 
-            log_user_action(current_app.logger, current_user, 'create_document', {'title': doc.title})
+            log_user_action(current_app.logger, current_user, 'create_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Uploaded document {doc.title}')
             flash(f"Document '{doc.title}' uploaded and published successfully.", 'success')
             return redirect(url_for('admin.documents_list'))
             
@@ -689,7 +711,7 @@ def edit_document(id):
         )
         db.session.commit()
         
-        log_user_action(logger, current_user, 'edit_document', {'title': doc.title})
+        log_user_action(logger, current_user, 'edit_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Edited document {doc.title}')
         
         flash('Document details updated successfully.', 'success')
         return redirect(url_for('admin.documents_list'))
@@ -748,7 +770,7 @@ def replace_document(id):
             )
             db.session.commit()
             
-            log_user_action(logger, current_user, 'replace_document', {'title': doc.title})
+            log_user_action(logger, current_user, 'replace_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Replaced document {doc.title}')
             
             flash(f"Document replaced successfully. Now at version {doc.upload_version}.", 'success')
             return redirect(url_for('admin.documents_list'))
@@ -776,7 +798,7 @@ def delete_document(id):
     )
     db.session.commit()
     
-    log_user_action(logger, current_user, 'delete_document', {'title': doc.title})
+    log_user_action(logger, current_user, 'delete_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Deleted document {doc.title}')
     flash(f"Document '{doc.title}' soft-deleted.", 'success')
     return redirect(url_for('admin.documents_list'))
 
@@ -819,7 +841,7 @@ def restore_document_version(v_id):
     doc.upload_version += 1
     
     db.session.commit()
-    log_user_action(logger, current_user, 'restore_document_version', {'title': doc.title, 'restored_version': ver.version_number})
+    log_user_action(logger, current_user, 'restore_document_version', module='documents', entity_type='Document', entity_id=doc.id, description=f'Restored document {doc.title} to version {ver.version_number}')
     
     flash(f"Restored version {ver.version_number} as version {doc.upload_version}.", 'success')
     return redirect(url_for('admin.view_document_history', id=doc.id))
@@ -934,9 +956,9 @@ def review_approval(id):
                 )
                 db.session.commit()
                 
-            create_notification(req.employee_id, f"Your '{req.request_type}' request for '{doc.title if doc else 'Document'}' was Approved.", url_for('employee.requests_list'))
+            create_notification(req.employee_id, f"Your '{req.request_type}' request for '{doc.title if doc else 'Document'}' was Approved.", link=url_for('employee.requests_list'), title='Request Approved', category='approvals', priority='high', entity_type='ApprovalRequest', entity_id=req.id)
                 
-            log_user_action(logger, current_user, f'approve_{req.request_type.lower()}', {'request_id': req.id})
+            log_user_action(logger, current_user, f'approve_{req.request_type.lower()}', module='approvals', entity_type='ApprovalRequest', entity_id=req.id, description=f'Approved request {req.id}')
             flash('Employee request approved successfully.', 'success')
             return redirect(url_for('admin.approvals_list'))
             
@@ -971,9 +993,9 @@ def review_approval(id):
                 )
                 db.session.commit()
                 
-            create_notification(req.employee_id, f"Your '{req.request_type}' request was Rejected. Reason: {reason}", url_for('employee.requests_list'))
+            create_notification(req.employee_id, f"Your '{req.request_type}' request was Rejected. Reason: {reason}", link=url_for('employee.requests_list'), title='Request Rejected', category='approvals', priority='high', entity_type='ApprovalRequest', entity_id=req.id)
                 
-            log_user_action(logger, current_user, f'reject_{req.request_type.lower()}', {'request_id': req.id, 'reason': reason})
+            log_user_action(logger, current_user, f'reject_{req.request_type.lower()}', module='approvals', entity_type='ApprovalRequest', entity_id=req.id, description=f'Rejected request {req.id} for {reason}')
             flash('Employee request rejected and logged.', 'info')
             return redirect(url_for('admin.approvals_list'))
             

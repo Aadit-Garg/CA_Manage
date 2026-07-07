@@ -14,6 +14,8 @@ from . import auth_bp
 from .forms import LoginForm, ChangePasswordForm
 
 
+from ..utils.logging import log_user_action
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit('50 per minute')
 def login():
@@ -31,6 +33,7 @@ def login():
             if not user.is_active:
                 flash('Your account has been deactivated. Please contact the administrator.', 'danger')
                 current_app.logger.warning(f'Login attempt for deactivated account: {user.email}')
+                log_user_action(current_app.logger, user, 'failed_login', module='auth', description='Account deactivated')
                 return render_template('auth/login.html', form=form)
 
             # Successful login
@@ -38,7 +41,9 @@ def login():
             user.last_login = datetime.now(timezone.utc)
             user.failed_login_attempts = 0  # Reset attempts on success
             db.session.commit()
+            
             current_app.logger.info(f'User logged in: {user.email} [{user.role}]')
+            log_user_action(current_app.logger, user, 'login', module='auth')
 
             # Redirect to requested page or role-based dashboard
             next_page = request.args.get('next')
@@ -53,6 +58,7 @@ def login():
             current_app.logger.warning(
                 f'Failed login attempt for email: {form.email.data} from IP: {request.remote_addr}'
             )
+            log_user_action(current_app.logger, user, 'failed_login', module='auth', description=f'Failed attempt for {form.email.data}')
 
     return render_template('auth/login.html', form=form)
 
@@ -60,7 +66,8 @@ def login():
 @auth_bp.route('/logout')
 @login_required
 def logout():
-    """Log out the current user and clear session."""
+    """Handle user logout."""
+    log_user_action(current_app.logger, current_user, 'logout', module='auth')
     current_app.logger.info(f'User logged out: {current_user.email}')
     logout_user()
     flash('You have been logged out.', 'info')
@@ -81,6 +88,7 @@ def change_password():
         current_user.set_password(form.new_password.data)
         db.session.commit()
         current_app.logger.info(f'Password changed for user: {current_user.email}')
+        log_user_action(current_app.logger, current_user, 'password_change', module='auth')
         flash('Password updated successfully.', 'success')
         return redirect(_dashboard_url())
 
@@ -157,13 +165,50 @@ def mark_notification_read(id):
     """Marks a single notification as read."""
     notif = Notification.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     notif.is_read = True
+    notif.read_at = datetime.now(timezone.utc)
     db.session.commit()
     return jsonify({'status': 'success'})
+
 
 @auth_bp.route('/notifications/read-all', methods=['POST'])
 @login_required
 def mark_all_notifications_read():
-    """Marks all notifications for user as read."""
-    Notification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
+    """Marks all unread notifications as read."""
+    unread = Notification.query.filter_by(user_id=current_user.id, is_read=False).all()
+    now = datetime.now(timezone.utc)
+    for n in unread:
+        n.is_read = True
+        n.read_at = now
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+
+@auth_bp.route('/notifications', methods=['GET'])
+@login_required
+def notification_center():
+    """Unified Notification Center for all roles."""
+    page = request.args.get('page', 1, type=int)
+    category = request.args.get('category', '')
+    
+    query = Notification.query.filter_by(user_id=current_user.id)
+    if category:
+        query = query.filter_by(category=category)
+        
+    pagination = query.order_by(Notification.created_at.desc()).paginate(page=page, per_page=20)
+    
+    return render_template(
+        'notifications/center.html',
+        notifications=pagination.items,
+        pagination=pagination,
+        category=category
+    )
+
+
+@auth_bp.route('/notifications/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_notification(id):
+    """Deletes a single notification."""
+    notif = Notification.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(notif)
     db.session.commit()
     return jsonify({'status': 'success'})
