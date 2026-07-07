@@ -275,7 +275,7 @@ def upload_document():
             )
             db.session.commit()
             
-            notify_admins(f"New Document Upload Request for '{doc.title}' by {current_user.full_name}\", link=url_for('admin.approvals_list'), title='New Upload Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
+            notify_admins(f"New Document Upload Request for '{doc.title}' by {current_user.full_name}", link=url_for('admin.approvals_list'), title='New Upload Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
 
             flash(f"Upload request for '{doc.title}' submitted to administrators for approval.", 'success')
             return redirect(url_for('employee.requests_list'))
@@ -347,7 +347,7 @@ def replace_document(id):
             )
             db.session.commit()
             
-            notify_admins(f"Document Replacement Request for '{doc.title}' by {current_user.full_name}\", link=url_for('admin.approvals_list'), title='Replacement Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
+            notify_admins(f"Document Replacement Request for '{doc.title}' by {current_user.full_name}", link=url_for('admin.approvals_list'), title='Replacement Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
 
             flash(f"Replacement request for '{doc.title}' submitted for admin approval.", 'success')
             return redirect(url_for('employee.requests_list'))
@@ -399,7 +399,7 @@ def edit_document(id):
         )
         db.session.commit()
         
-        notify_admins(f"Metadata Edit Request for '{doc.title}' by {current_user.full_name}\", link=url_for('admin.approvals_list'), title='Edit Request', category='approvals', priority='normal', entity_type='Document', entity_id=doc.id)
+        notify_admins(f"Metadata Edit Request for '{doc.title}' by {current_user.full_name}", link=url_for('admin.approvals_list'), title='Edit Request', category='approvals', priority='normal', entity_type='Document', entity_id=doc.id)
 
         flash(f"Metadata edit request for '{doc.title}' submitted for approval.", 'success')
         return redirect(url_for('employee.requests_list'))
@@ -431,7 +431,7 @@ def delete_document_request(id):
     )
     db.session.commit()
     
-    notify_admins(f"Delete Document Request for '{doc.title}' by {current_user.full_name}\", link=url_for('admin.approvals_list'), title='Delete Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
+    notify_admins(f"Delete Document Request for '{doc.title}' by {current_user.full_name}", link=url_for('admin.approvals_list'), title='Delete Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
     
     flash(f"Delete request for '{doc.title}' submitted.", 'success')
     return redirect(url_for('employee.requests_list'))
@@ -478,7 +478,7 @@ def password_change_request(id):
         )
         db.session.commit()
         
-        notify_admins(f"Password Edit Request for '{doc.title}' by {current_user.full_name}\", link=url_for('admin.approvals_list'), title='Password Edit Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
+        notify_admins(f"Password Edit Request for '{doc.title}' by {current_user.full_name}", link=url_for('admin.approvals_list'), title='Password Edit Request', category='approvals', priority='high', entity_type='Document', entity_id=doc.id)
 
         flash(f"Password modification request for '{doc.title}' submitted.", 'success')
         return redirect(url_for('employee.requests_list'))
