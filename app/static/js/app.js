@@ -155,3 +155,161 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Force PWA push notification prompt on page load
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+    // Wait 2 seconds, then check if we should prompt the user
+    setTimeout(async () => {
+        const enableBtn = document.getElementById('enableWebPushBtn');
+        if (!enableBtn) return; // Not logged in or button not present
+
+        // If the button is already marked as Enabled, don't show the prompt
+        if (enableBtn.innerHTML.includes('Enabled')) return;
+
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            const permission = Notification.permission;
+            if (permission === 'default') {
+                showPushPromptModal();
+            }
+        }
+    }, 2500);
+});
+
+function showPushPromptModal() {
+    if (document.getElementById('pushPromptModal')) return;
+
+    const modalHTML = 
+    <div class="modal fade" id="pushPromptModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 360px; margin: 1.75rem auto;">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);">
+                <div class="modal-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                        <i class="bi bi-bell-fill fs-3 animate-bell"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Stay Updated</h5>
+                    <p class="text-muted small px-2">Enable OS and push notifications to receive real-time alerts for document approvals, uploads, and firm messages.</p>
+                    <div class="d-flex flex-column gap-2 mt-4">
+                        <button class="btn btn-primary w-100 py-2 fw-medium btn-sm" onclick="enablePushFromModal()">
+                            Enable Notifications
+                        </button>
+                        <button class="btn btn-link text-muted btn-sm text-decoration-none" data-bs-dismiss="modal">
+                            Later
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById('pushPromptModal'));
+    
+    if (!document.getElementById('bell-animation-css')) {
+        const style = document.createElement('style');
+        style.id = 'bell-animation-css';
+        style.innerHTML = 
+            @keyframes ring {
+                0% { transform: rotate(0); }
+                10% { transform: rotate(15deg); }
+                20% { transform: rotate(-10deg); }
+                30% { transform: rotate(5deg); }
+                40% { transform: rotate(-5deg); }
+                50% { transform: rotate(0); }
+            }
+            .animate-bell {
+                animation: ring 1.5s ease infinite;
+                display: inline-block;
+            }
+        ;
+        document.head.appendChild(style);
+    }
+    
+    modal.show();
+}
+
+async function enablePushFromModal() {
+    const modalEl = document.getElementById('pushPromptModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    
+    if (typeof subscribeToPush === 'function') {
+        await subscribeToPush();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Force PWA Installation Prompt (PC & Mobile)
+// ═══════════════════════════════════════════════════════════════════
+let deferredPrompt;
+
+function isPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true || 
+           document.referrer.includes('android-app://');
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the default browser prompt
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Only prompt if not already running in PWA standalone mode
+    if (!isPWA()) {
+        // Wait 4 seconds after page load to show the install prompt
+        setTimeout(() => {
+            showPWAInstallModal();
+        }, 4000);
+    }
+});
+
+function showPWAInstallModal() {
+    if (document.getElementById('pwaInstallModal')) return;
+
+    const modalHTML = 
+    <div class="modal fade" id="pwaInstallModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px; margin: 1.75rem auto;">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);">
+                <div class="modal-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                        <i class="bi bi-laptop fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Install CA Manage</h5>
+                    <p class="text-muted small px-2">Install our app on your computer or mobile device for a faster, full-screen experience and secure offline access.</p>
+                    <div class="d-flex flex-column gap-2 mt-4">
+                        <button class="btn btn-primary w-100 py-2 fw-medium btn-sm" onclick="triggerPWAInstall()">
+                            Install Application
+                        </button>
+                        <button class="btn btn-link text-muted btn-sm text-decoration-none" data-bs-dismiss="modal">
+                            Use in Browser
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById('pwaInstallModal'));
+    modal.show();
+}
+
+async function triggerPWAInstall() {
+    const modalEl = document.getElementById('pwaInstallModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+
+    if (!deferredPrompt) return;
+    
+    // Show the browser install prompt
+    deferredPrompt.prompt();
+    
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log([PWA] Install prompt outcome: );
+    
+    // Clear the deferred prompt variable
+    deferredPrompt = null;
+}

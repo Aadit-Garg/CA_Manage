@@ -181,8 +181,8 @@ self.addEventListener('push', function(event) {
     const title = data.title;
     const options = {
         body: data.body,
-        icon: '/static/icons/icon-192x192.png',
-        badge: '/static/icons/icon-192x192.png',
+        icon: '/static/icons/icon-192x192.svg',
+        badge: '/static/icons/icon-192x192.svg',
         data: {
             url: data.url
         }

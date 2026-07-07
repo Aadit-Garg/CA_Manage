@@ -125,6 +125,12 @@ async function subscribeToPush() {
         const data = await res.json();
         const vapidPublicKey = data.public_key;
 
+        // Clear any stale subscriptions first to prevent "push service error"
+        const existingSub = await registration.pushManager.getSubscription();
+        if (existingSub) {
+            await existingSub.unsubscribe();
+        }
+
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)

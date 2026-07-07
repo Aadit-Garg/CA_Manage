@@ -1,22 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a365d"/>
-      <stop offset="100%" style="stop-color:#0f4c75"/>
+      <stop offset="0%" style="stop-color:#0f172a" />
+      <stop offset="100%" style="stop-color:#1e293b" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#d97706" />
+      <stop offset="50%" style="stop-color:#f59e0b" />
+      <stop offset="100%" style="stop-color:#fbbf24" />
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#38b2ac"/>
-      <stop offset="100%" style="stop-color:#4fd1c5"/>
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#60a5fa" />
     </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-  <!-- Shield -->
-  <path d="M256 80L128 144v96c0 89.6 54.4 173.6 128 192 73.6-18.4 128-102.4 128-192V144L256 80z" 
-        fill="none" stroke="url(#accent)" stroke-width="12" stroke-linejoin="round"/>
-  <!-- Checkmark -->
-  <polyline points="192,256 234,298 320,212" 
-            fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- CA text -->
-  <text x="256" y="410" text-anchor="middle" fill="rgba(255,255,255,0.7)" 
-        font-family="Inter,sans-serif" font-weight="800" font-size="52">CA</text>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+
+  <!-- Logo Graphics Group -->
+  <g filter="url(#shadow)">
+    <!-- Shield/Document outline -->
+    <path d="M256 70 L390 130 V260 C390 350 256 430 256 430 C256 430 122 350 122 260 V130 Z" 
+          fill="none" stroke="url(#accent)" stroke-width="12" stroke-linejoin="round" opacity="0.4" />
+    
+    <!-- Stylized "C" Ribbon -->
+    <path d="M200 170 C160 170 140 190 140 256 C140 322 160 342 200 342 C230 342 245 328 250 310" 
+          fill="none" stroke="url(#gold)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+          
+    <!-- Stylized "A" Ribbon -->
+    <path d="M280 342 L320 170 L360 342" 
+          fill="none" stroke="url(#gold)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M295 285 H345" 
+          fill="none" stroke="url(#gold)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
 </svg>

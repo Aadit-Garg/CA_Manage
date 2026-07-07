@@ -128,31 +128,39 @@ def configure_logging(app):
     """Set up application logging with file and stream handlers."""
     log_level = logging.DEBUG if app.debug else logging.INFO
 
-    # Create logs directory
-    log_dir = os.path.join(os.path.dirname(app.root_path), 'logs')
-    os.makedirs(log_dir, exist_ok=True)
-
-    # File handler with rotation
-    from logging.handlers import RotatingFileHandler
-    file_handler = RotatingFileHandler(
-        os.path.join(log_dir, 'ca_manage.log'),
-        maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=5,
-        encoding='utf-8'
-    )
-    file_handler.setFormatter(logging.Formatter(
-        '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-    ))
-    file_handler.setLevel(log_level)
-
-    # Stream handler
+    # Stream handler (always enabled)
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(logging.Formatter(
         '%(levelname)s: %(message)s'
     ))
     stream_handler.setLevel(log_level)
-
-    app.logger.addHandler(file_handler)
     app.logger.addHandler(stream_handler)
     app.logger.setLevel(log_level)
+
+    # Skip file logging on Vercel (read-only file system)
+    if os.environ.get('VERCEL') == '1':
+        app.logger.info('CA Manage application started (Vercel Mode - Stream Logging Only)')
+        return
+
+    try:
+        # Create logs directory
+        log_dir = os.path.join(os.path.dirname(app.root_path), 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+
+        # File handler with rotation
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler(
+            os.path.join(log_dir, 'ca_manage.log'),
+            maxBytes=10 * 1024 * 1024,  # 10 MB
+            backupCount=5,
+            encoding='utf-8'
+        )
+        file_handler.setFormatter(logging.Formatter(
+            '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+        ))
+        file_handler.setLevel(log_level)
+        app.logger.addHandler(file_handler)
+    except Exception as e:
+        app.logger.warning(f'Could not configure file logging: {e}')
+
     app.logger.info('CA Manage application started')

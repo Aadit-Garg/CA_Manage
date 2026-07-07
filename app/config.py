@@ -14,7 +14,13 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
     
     # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///ca_manage.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    if not SQLALCHEMY_DATABASE_URI:
+        if os.environ.get('VERCEL') == '1':
+            SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/ca_manage.db'
+        else:
+            SQLALCHEMY_DATABASE_URI = 'sqlite:///ca_manage.db'
+            
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,

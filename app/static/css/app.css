@@ -226,13 +226,94 @@ body {
         display: flex !important;
     }
     
-    /* Adjust header padding on mobile */
-    .ca-header {
-        padding: 0 16px;
+    /* ── Main content padding ── */
+    .ca-main {
+        padding: 16px;
     }
     
-    /* Make search bar smaller */
+    /* ── Header padding ── */
+    .ca-header {
+        padding: 0 12px;
+        gap: 8px;
+    }
+    
+    /* ── Search bar ── */
     .ca-header form {
-        width: 200px !important;
+        width: 140px !important;
+    }
+    
+    .ca-header .gap-4 {
+        gap: 0.75rem !important;
+    }
+    
+    /* ── Login box ── */
+    .ca-login-box {
+        width: 92vw;
+        max-width: 400px;
+        padding: 24px 20px;
+    }
+    
+    /* ── Cards ── */
+    .ca-card-header {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .ca-card-body {
+        padding: 16px;
+    }
+    
+    /* ── Stat cards row ── */
+    .row .col-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    /* ── Tables overflow ── */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* ── Notification center sidebar (stack vertically) ── */
+    .col-md-3, .col-md-9 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    /* ── Typography tightening ── */
+    h2.h4, h3.fw-bold, .h4 {
+        font-size: 1.15rem;
+    }
+    
+    /* ── Buttons ── */
+    .btn-sm {
+        font-size: 0.78rem;
+        padding: 4px 10px;
+    }
+    
+    /* ── Dropdowns ── */
+    .dropdown-menu {
+        width: 280px !important;
     }
 }
+
+/* Extra small screens */
+@media (max-width: 575.98px) {
+    .ca-main {
+        padding: 12px;
+    }
+    
+    .ca-header form {
+        display: none !important;
+    }
+    
+    .ca-login-box {
+        padding: 20px 16px;
+    }
+    
+    .row .col-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
