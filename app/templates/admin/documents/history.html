@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Version History — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.documents_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Documents
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">Version History: {{ document.title }}</h3>
+    <p class="text-muted small mb-0">Inspect previous PDF file replacements and restore previous versions.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Current Version Details -->
+    <div class="col-lg-4">
+        <div class="ca-card mb-4">
+            <div class="ca-card-header bg-primary bg-opacity-10 text-primary">Current Live Version (v{{ document.upload_version }})</div>
+            <div class="ca-card-body small">
+                <div class="mb-3">
+                    <span class="text-muted d-block">Original Filename</span>
+                    <strong class="text-dark text-break">{{ document.original_filename }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted d-block">Uploaded By</span>
+                    <strong class="text-dark">{{ document.uploader.full_name }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted d-block">Last Updated</span>
+                    <strong class="text-dark">{{ document.updated_at.strftime('%b %d, %Y %I:%M %p') }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted d-block">File Size</span>
+                    <strong class="text-dark">{{ (document.file_size / 1024 / 1024) | round(2) }} MB</strong>
+                </div>
+                <div class="mb-0">
+                    <span class="text-muted d-block">SHA-256 Hash</span>
+                    <code class="text-secondary text-break">{{ document.file_hash }}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History List -->
+    <div class="col-lg-8">
+        <div class="ca-card">
+            <div class="ca-card-header">Archived Versions</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Ver</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Filename</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Uploaded By</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Archived Date</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% if document.versions %}
+                            {% for ver in document.versions %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-secondary">v{{ ver.version_number }}</td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" title="{{ ver.original_filename }}">
+                                        {{ ver.original_filename }}
+                                    </div>
+                                </td>
+                                <td>{{ ver.uploader.full_name }}</td>
+                                <td class="text-muted small">{{ ver.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                <td class="pe-4 text-end">
+                                    <form method="POST" action="{{ url_for('admin.restore_document_version', v_id=ver.id) }}" onsubmit="return confirm('Are you sure you want to restore version {{ ver.version_number }} as the current live version?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary py-1 px-3">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Restore v{{ ver.version_number }}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-clock-history fs-2 d-block mb-2"></i>
+                                    No older versions archived.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

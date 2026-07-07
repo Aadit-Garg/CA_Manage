@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Edit Employee — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.employees_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Employees
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">Edit Employee: {{ employee.full_name }}</h3>
+    <p class="text-muted small mb-0">Update contact details, designation, or notes.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="ca-card">
+            <div class="ca-card-header">Employee Details</div>
+            <div class="ca-card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.full_name.label.text }}</label>
+                            {{ form.full_name }}
+                            {% for error in form.full_name.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.email.label.text }}</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.phone.label.text }}</label>
+                            {{ form.phone }}
+                            {% for error in form.phone.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.designation.label.text }}</label>
+                            {{ form.designation }}
+                            {% for error in form.designation.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.joining_date.label.text }}</label>
+                            {{ form.joining_date }}
+                            {% for error in form.joining_date.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-dark small">{{ form.notes.label.text }}</label>
+                            {{ form.notes }}
+                            {% for error in form.notes.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-12 border-top pt-3 mt-4 d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('admin.employees_list') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-sm btn-primary") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

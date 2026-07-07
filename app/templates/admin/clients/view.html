@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Client Profile — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.clients_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Clients
+    </a>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <div>
+            <h3 class="fw-bold mb-0">{{ client.full_name }}</h3>
+            <span class="text-secondary small fw-bold">{{ client.client_code }}</span>
+            {% if client.upload_id %}
+            <span class="ms-2 badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" title="Upload ID" onclick="navigator.clipboard.writeText('{{ client.upload_id }}'); alert('Copied Upload ID!');" style="cursor:pointer;">
+                <i class="bi bi-clipboard me-1"></i>{{ client.upload_id }}
+            </span>
+            {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_client', id=client.id) }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i>Edit Profile
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Client Quick Info -->
+    <div class="col-lg-4">
+        <div class="ca-card text-center p-4 mb-4">
+            <div class="bg-dark bg-opacity-10 text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                {{ client.full_name[:2].upper() }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ client.full_name }}</h4>
+            <p class="text-muted small mb-2">{{ client.firm_name or 'Individual Client' }}</p>
+            <span class="badge bg-secondary mb-3">{{ client.client_type | title }}</span>
+            
+            <div class="border-top pt-3">
+                <div class="row">
+                    <div class="col-6 border-end">
+                        <small class="text-muted d-block uppercase mb-1">Status</small>
+                        {% if client.status == 'Active' %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Inactive</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block uppercase mb-1">Login</small>
+                        {% if client.user.is_active %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Enabled</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Disabled</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assigned Employee Card -->
+        <div class="ca-card">
+            <div class="ca-card-header">Assigned Consultant</div>
+            <div class="ca-card-body">
+                {% if client.assigned_employee %}
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                            {{ client.assigned_employee.full_name[:2].upper() }}
+                        </div>
+                        <div>
+                            <span class="fw-bold text-dark d-block">{{ client.assigned_employee.full_name }}</span>
+                            <small class="text-muted">{{ client.assigned_employee.email }}</small>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="small text-muted mb-0">No employee assigned to this client yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact & Business Details -->
+    <div class="col-lg-8">
+        <!-- Details Card -->
+        <div class="ca-card mb-4">
+            <div class="ca-card-header">Business & Contact Details</div>
+            <div class="ca-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Full Name</small>
+                        <span class="fw-medium text-dark">{{ client.full_name }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Firm/Business Name</small>
+                        <span class="fw-medium text-dark">{{ client.firm_name or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Email Address</small>
+                        <span class="fw-medium text-dark">{{ client.email }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Phone Number</small>
+                        <span class="fw-medium text-dark">{{ client.phone or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Permanent Account Number (PAN)</small>
+                        <span class="fw-medium text-dark"><code>{{ client.PAN or '—' }}</code></span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">GSTIN</small>
+                        <span class="fw-medium text-dark"><code>{{ client.GST or '—' }}</code></span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Address</small>
+                        <span class="fw-medium text-dark">
+                            {% if client.address %}
+                                {{ client.address }}, {{ client.city or '' }} {{ client.state or '' }} {{ client.pincode or '' }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Notes</small>
+                        <span class="fw-medium text-dark">{{ client.notes or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document & Login History -->
+        <div class="row g-4">
+            <div class="col-md-7">
+                <div class="ca-card h-100">
+                    <div class="ca-card-header d-flex justify-content-between align-items-center">
+                        <span>Document History</span>
+                        <span class="badge bg-primary rounded-pill">{{ documents|length }}</span>
+                    </div>
+                    <div class="ca-card-body p-0">
+                        {% if documents %}
+                            <div class="list-group list-group-flush">
+                                {% for doc in documents[:5] %}
+                                <div class="list-group-item px-4 py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-truncate me-3">
+                                            <a href="{{ doc.cloudinary_url }}" target="_blank" class="fw-medium text-decoration-none text-dark d-block text-truncate">
+                                                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ doc.title }}
+                                            </a>
+                                            <small class="text-muted">{{ doc.document_type }} &bull; {{ doc.financial_year }}</small>
+                                        </div>
+                                        <small class="text-muted text-nowrap">{{ doc.created_at.strftime('%b %d, %Y') }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if documents|length > 5 %}
+                            <div class="p-3 text-center border-top">
+                                <a href="{{ url_for('admin.documents_list', search=client.client_code) }}" class="small text-decoration-none">View all documents</a>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-5 text-secondary">
+                                <i class="bi bi-folder-symlink fs-2 d-block mb-1 text-muted"></i>
+                                <span class="small">— No Documents ─</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="ca-card h-100">
+                    <div class="ca-card-header">Account Activity</div>
+                    <div class="ca-card-body">
+                        <div class="d-flex align-items-start mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase mb-1">Last Login</small>
+                                {% if client.user.last_login %}
+                                    <span class="fw-bold text-dark">{{ client.user.last_login.strftime('%B %d, %Y') }}</span>
+                                    <div class="small text-muted mt-1">{{ client.user.last_login.strftime('%I:%M %p') }}</div>
+                                {% else %}
+                                    <span class="text-muted">Never logged in</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-start">
+                            <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 me-3">
+                                <i class="bi bi-person-plus"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase mb-1">Account Created</small>
+                                <span class="fw-bold text-dark">{{ client.created_at.strftime('%B %d, %Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% block title %}Bulk Upload PDFs — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{{ url_for('employee.documents_list') }}" class="text-decoration-none small text-muted">
+            <i class="bi bi-arrow-left me-1"></i>Back to Documents
+        </a>
+        <h3 class="fw-bold mb-0 mt-2">Bulk Upload PDFs</h3>
+    </div>
+</div>
+
+<div id="bulk-upload-app">
+    <!-- Step 1: File Selection -->
+    <div id="step-1" class="ca-card p-5 text-center">
+        <i class="bi bi-cloud-arrow-up display-1 text-primary mb-3"></i>
+        <h4>Upload Documents</h4>
+        <p class="text-muted mb-4">Drag & drop PDFs here or click to browse. The system will automatically map them to clients based on the Upload UUID in the filename.</p>
+        
+        <input type="file" id="file-input" class="d-none" multiple accept="application/pdf">
+        <button type="button" class="btn btn-primary px-4 py-2" onclick="document.getElementById('file-input').click()">
+            <i class="bi bi-folder2-open me-2"></i>Select PDF Files
+        </button>
+        <div class="mt-3 small text-muted">Maximum 25MB per file.</div>
+    </div>
+
+    <!-- Step 2: Analysis Loading -->
+    <div id="step-2" class="ca-card p-5 text-center d-none">
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4>Analyzing Files...</h4>
+        <p class="text-muted">Extracting UUIDs and checking for duplicates. Please wait.</p>
+    </div>
+
+    <!-- Step 3: Review & Mapping -->
+    <div id="step-3" class="d-none">
+        <div class="ca-card mb-4">
+            <div class="ca-card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Review Documents</span>
+                <span class="badge bg-primary rounded-pill" id="review-count">0 Files</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="review-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Status</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Filename</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Matched Client</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Doc Type & Year</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Duplicate Action</th>
+                            <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <button class="btn btn-outline-secondary" onclick="resetApp()">Cancel</button>
+            <button class="btn btn-success px-4" id="btn-start-upload" onclick="startUpload()">
+                <i class="bi bi-cloud-upload me-2"></i>Start Upload
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 4: Upload Progress -->
+    <div id="step-4" class="ca-card p-4 d-none mb-5">
+        <h4 class="mb-3">Uploading Documents...</h4>
+        <div class="progress mb-3" style="height: 25px;">
+            <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;">0%</div>
+        </div>
+        <div class="d-flex justify-content-between text-muted small mb-4">
+            <span id="upload-status-text">Uploading 1 of 10...</span>
+            <span><span class="text-success fw-bold" id="upload-success">0</span> Success | <span class="text-danger fw-bold" id="upload-failed">0</span> Failed</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle" id="progress-table">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Filename</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Step 5: Summary -->
+    <div id="step-5" class="ca-card p-5 text-center d-none">
+        <i class="bi bi-check-circle-fill display-1 text-success mb-3"></i>
+        <h4>Upload Complete</h4>
+        <p class="text-muted mb-4">The bulk upload session has finished.</p>
+        
+        <div class="row justify-content-center mb-4 g-3">
+            <div class="col-6 col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="fw-bold mb-0 text-dark" id="sum-total">0</h3>
+                    <small class="text-muted">Total Processed</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="fw-bold mb-0 text-success" id="sum-success">0</h3>
+                    <small class="text-muted">Successfully Uploaded</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="fw-bold mb-0 text-danger" id="sum-failed">0</h3>
+                    <small class="text-muted">Failed Uploads</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-primary" onclick="window.location.href='{{ url_for('employee.documents_list') }}'">Go to Documents</button>
+            <button class="btn btn-outline-secondary" onclick="exportSummaryCSV()">Export Summary (CSV)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Constants and Data from Server
+    const CSRF_TOKEN = "{{ csrf_token() }}";
+    const CLIENTS = {{ clients|tojson }};
+    const DOC_TYPES = {{ doc_types|tojson }};
+    const FINANCIAL_YEARS = ['2023-24', '2024-25', '2025-26', '2026-27'];
+    
+    // State
+    let selectedFiles = [];
+    let reviewedFiles = [];
+    let sessionId = null;
+    let startTime = null;
+    
+    // DOM Elements
+    const fileInput = document.getElementById('file-input');
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const step3 = document.getElementById('step-3');
+    const step4 = document.getElementById('step-4');
+    const step5 = document.getElementById('step-5');
+    
+    // Setup Drag & Drop
+    step1.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        step1.classList.add('border-primary', 'bg-light');
+    });
+    step1.addEventListener('dragleave', () => {
+        step1.classList.remove('border-primary', 'bg-light');
+    });
+    step1.addEventListener('drop', (e) => {
+        e.preventDefault();
+        step1.classList.remove('border-primary', 'bg-light');
+        if (e.dataTransfer.files.length > 0) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            handleFiles(fileInput.files);
+        }
+    });
+    
+    // Utilities
+    async function hashFile(file) {
+        // Quick SHA-256 using subtle crypto to detect duplicates
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    
+    function resetApp() {
+        selectedFiles = [];
+        reviewedFiles = [];
+        fileInput.value = '';
+        showStep(1);
+    }
+    
+    function showStep(stepNum) {
+        [step1, step2, step3, step4, step5].forEach((el, idx) => {
+            if(idx + 1 === stepNum) el.classList.remove('d-none');
+            else el.classList.add('d-none');
+        });
+    }
+    
+    // Step 1 -> 2 -> 3
+    async function handleFiles(files) {
+        showStep(2);
+        
+        // Filter out non PDFs
+        selectedFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+        
+        if(selectedFiles.length === 0) {
+            alert('Please select valid PDF files.');
+            resetApp();
+            return;
+        }
+        
+        // Build metadata payload
+        const metadataList = [];
+        for (const file of selectedFiles) {
+            // Note: Hashing could take time for many large files. We only hash the first 1MB for speed if needed, 
+            // but for typical PDFs full hash is fine.
+            let hash = '';
+            try {
+                hash = await hashFile(file);
+            } catch (e) { console.error('Hash error', e); }
+            
+            metadataList.push({
+                filename: file.name,
+                size: file.size,
+                hash: hash
+            });
+        }
+        
+        // Send to backend for analysis
+        try {
+            const response = await fetch('{{ url_for("api.analyze_bulk_upload") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                body: JSON.stringify(metadataList)
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                reviewedFiles = data.results.map((r, i) => ({...r, fileObj: selectedFiles[i], skip: r.status === 'Error'}));
+                renderReviewTable();
+                showStep(3);
+            } else {
+                alert('Analysis failed: ' + (data.error || 'Unknown error'));
+                resetApp();
+            }
+        } catch (error) {
+            alert('Network error during analysis.');
+            resetApp();
+        }
+    }
+    
+    function renderReviewTable() {
+        const tbody = document.querySelector('#review-table tbody');
+        tbody.innerHTML = '';
+        document.getElementById('review-count').innerText = `${reviewedFiles.length} Files`;
+        
+        let validCount = 0;
+        
+        reviewedFiles.forEach((f, idx) => {
+            const tr = document.createElement('tr');
+            
+            // Status Badge
+            let statusBadge = `<span class="badge bg-${f.color} bg-opacity-10 text-${f.color} border border-${f.color} border-opacity-25"><i class="bi bi-check-circle me-1"></i>Ready</span>`;
+            if (f.status === 'Unmatched') statusBadge = `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="bi bi-exclamation-triangle me-1"></i>Unmatched</span>`;
+            else if (f.status === 'Duplicate') statusBadge = `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25"><i class="bi bi-files me-1"></i>Duplicate</span>`;
+            else if (f.status === 'Error') statusBadge = `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="bi bi-x-circle me-1"></i>Error</span>`;
+            
+            // Client Select
+            let clientSelect = `<select class="form-select form-select-sm" onchange="updateFile(${idx}, 'client_id', this.value)" ${f.skip ? 'disabled' : ''}>`;
+            clientSelect += `<option value="">-- Select Client --</option>`;
+            CLIENTS.forEach(c => {
+                const sel = (c.id == f.client_id) ? 'selected' : '';
+                clientSelect += `<option value="${c.id}" ${sel}>${c.name}</option>`;
+            });
+            clientSelect += `</select>`;
+            
+            // Doc Type
+            let typeSelect = `<select class="form-select form-select-sm mb-1" onchange="updateFile(${idx}, 'doc_type', this.value)" ${f.skip ? 'disabled' : ''}>`;
+            DOC_TYPES.forEach(t => {
+                const sel = (t == f.doc_type) ? 'selected' : '';
+                typeSelect += `<option value="${t}" ${sel}>${t}</option>`;
+            });
+            typeSelect += `</select>`;
+            
+            // FY
+            let fySelect = `<select class="form-select form-select-sm" onchange="updateFile(${idx}, 'fy', this.value)" ${f.skip ? 'disabled' : ''}>`;
+            FINANCIAL_YEARS.forEach(y => {
+                const sel = (y == f.fy) ? 'selected' : '';
+                fySelect += `<option value="${y}" ${sel}>${y}</option>`;
+            });
+            fySelect += `</select>`;
+            
+            // Duplicate Action
+            let dupSelect = `<span class="text-muted small">—</span>`;
+            if (f.status === 'Duplicate') {
+                dupSelect = `
+                    <select class="form-select form-select-sm" onchange="updateFile(${idx}, 'duplicate_action', this.value)">
+                        <option value="skip" ${f.duplicate_action==='skip'?'selected':''}>Skip</option>
+                        <option value="replace" ${f.duplicate_action==='replace'?'selected':''}>Replace Existing</option>
+                        <option value="keep" ${f.duplicate_action==='keep'?'selected':''}>Upload as New</option>
+                    </select>
+                `;
+            }
+            
+            // Error Text
+            let nameContent = `<span class="fw-medium text-dark">${f.filename}</span><br><small class="text-muted">${(f.size/1024/1024).toFixed(2)} MB</small>`;
+            if (f.error) nameContent += `<br><small class="text-danger">${f.error}</small>`;
+            
+            // Row HTML
+            tr.innerHTML = `
+                <td class="ps-4">${statusBadge}</td>
+                <td>${nameContent}</td>
+                <td>${clientSelect}</td>
+                <td>${typeSelect}${fySelect}</td>
+                <td>${dupSelect}</td>
+                <td class="pe-4 text-end">
+                    <button class="btn btn-sm ${f.skip ? 'btn-secondary' : 'btn-outline-danger'}" onclick="toggleSkip(${idx})">
+                        ${f.skip ? 'Include' : 'Skip'}
+                    </button>
+                </td>
+            `;
+            
+            if (!f.skip && f.client_id) validCount++;
+            
+            if (f.skip) tr.style.opacity = '0.5';
+            tbody.appendChild(tr);
+        });
+        
+        document.getElementById('btn-start-upload').disabled = (validCount === 0);
+    }
+    
+    function updateFile(idx, key, value) {
+        reviewedFiles[idx][key] = value;
+        // Check if we need to re-evaluate valid count
+        let validCount = reviewedFiles.filter(f => !f.skip && f.client_id).length;
+        document.getElementById('btn-start-upload').disabled = (validCount === 0);
+    }
+    
+    function toggleSkip(idx) {
+        reviewedFiles[idx].skip = !reviewedFiles[idx].skip;
+        renderReviewTable();
+    }
+    
+    // Step 4 -> 5
+    async function startUpload() {
+        const filesToUpload = reviewedFiles.filter(f => !f.skip && f.client_id);
+        if(filesToUpload.length === 0) return;
+        
+        showStep(4);
+        startTime = new Date();
+        
+        // 1. Create Session
+        try {
+            const sRes = await fetch('{{ url_for("api.create_bulk_session") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify({ total_files: filesToUpload.length })
+            });
+            const sData = await sRes.json();
+            sessionId = sData.session_id;
+        } catch (e) {
+            console.error("Session creation failed", e);
+        }
+        
+        // 2. Sequential Upload Loop
+        let success = 0;
+        let failed = 0;
+        
+        const ptbody = document.querySelector('#progress-table tbody');
+        ptbody.innerHTML = '';
+        
+        for (let i = 0; i < filesToUpload.length; i++) {
+            const f = filesToUpload[i];
+            
+            // Update UI
+            document.getElementById('upload-status-text').innerText = `Uploading ${i+1} of ${filesToUpload.length}...`;
+            const pct = Math.round((i / filesToUpload.length) * 100);
+            const pb = document.getElementById('upload-progress-bar');
+            pb.style.width = pct + '%';
+            pb.innerText = pct + '%';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="ps-3">${f.filename}</td>
+                <td>${CLIENTS.find(c => c.id == f.client_id)?.name || ''}</td>
+                <td id="status-${i}"><span class="spinner-border spinner-border-sm text-primary"></span> Uploading...</td>
+            `;
+            ptbody.appendChild(tr);
+            
+            // Build FormData
+            const formData = new FormData();
+            formData.append('file', f.fileObj);
+            formData.append('client_id', f.client_id);
+            formData.append('doc_type', f.doc_type);
+            formData.append('fy', f.fy);
+            formData.append('duplicate_action', f.duplicate_action);
+            formData.append('hash', f.hash);
+            if (sessionId) formData.append('session_id', sessionId);
+            
+            // Upload
+            try {
+                const res = await fetch('{{ url_for("api.process_bulk_upload") }}', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN },
+                    body: formData
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    success++;
+                    document.getElementById(`status-${i}`).innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>${data.status}</span>`;
+                } else {
+                    failed++;
+                    document.getElementById(`status-${i}`).innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${data.error}</span>`;
+                }
+            } catch (e) {
+                failed++;
+                document.getElementById(`status-${i}`).innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Network Error</span>`;
+            }
+            
+            document.getElementById('upload-success').innerText = success;
+            document.getElementById('upload-failed').innerText = failed;
+        }
+        
+        // Complete
+        const pb = document.getElementById('upload-progress-bar');
+        pb.style.width = '100%';
+        pb.innerText = '100%';
+        pb.classList.remove('progress-bar-animated');
+        pb.classList.replace('bg-primary', 'bg-success');
+        document.getElementById('upload-status-text').innerText = 'Upload Complete!';
+        
+        // 3. Mark Session Complete
+        const timeTaken = (new Date() - startTime) / 1000;
+        if (sessionId) {
+            fetch(`{{ url_for("api.complete_bulk_session", id=0) }}`.replace('0', sessionId), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify({ time_taken: timeTaken })
+            }).catch(e=>console.error(e));
+        }
+        
+        // 4. Show Summary
+        setTimeout(() => {
+            document.getElementById('sum-total').innerText = filesToUpload.length;
+            document.getElementById('sum-success').innerText = success;
+            document.getElementById('sum-failed').innerText = failed;
+            showStep(5);
+        }, 1500);
+    }
+    
+    function exportSummaryCSV() {
+        let csv = 'Filename,Client,Status\n';
+        const rows = document.querySelectorAll('#progress-table tbody tr');
+        rows.forEach(r => {
+            const cols = r.querySelectorAll('td');
+            csv += `"${cols[0].innerText}","${cols[1].innerText}","${cols[2].innerText}"\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bulk_upload_summary_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+    }
+</script>
+{% endblock %}

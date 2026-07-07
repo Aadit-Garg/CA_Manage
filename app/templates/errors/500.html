@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}500 — Internal Server Error{% endblock %}
+{% block body_class %}ca-auth-page{% endblock %}
+
+{% block auth_content %}
+<div class="ca-error-container">
+    <div class="text-center ca-card p-5" style="max-width: 500px; border-top: 4px solid var(--ca-primary);">
+        <div class="ca-error-code">500</div>
+        <h2 class="fw-bold mb-3 text-dark">Internal Server Error</h2>
+        <p class="text-muted mb-4">The server encountered an unexpected condition that prevented it from fulfilling the request. Our administrators have been notified.</p>
+        <div class="d-flex gap-2">
+            <a href="javascript:location.reload()" class="btn btn-outline-secondary w-50 pt-2 pb-2">
+                Retry
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-primary w-50 pt-2 pb-2">
+                Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

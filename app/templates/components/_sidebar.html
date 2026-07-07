@@ -1,0 +1,86 @@
+<a href="{{ url_for('index') }}" class="ca-brand">
+    <i class="bi bi-shield-check text-primary"></i>
+    CA Manage
+</a>
+
+<div class="ca-nav-menu">
+    <span class="text-uppercase small fw-bold mt-2 mb-2 px-3" style="color: #475569;">Menu</span>
+    
+    <a href="{{ url_for('index') }}" class="ca-nav-item {% if request.endpoint in ['admin.dashboard', 'employee.dashboard', 'client_portal.dashboard'] %}active{% endif %}">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+    </a>
+    
+    {% if current_user.role == 'employee' %}
+    <a href="{{ url_for('employee.clients_list') }}" class="ca-nav-item {% if request.endpoint == 'employee.clients_list' %}active{% endif %}">
+        <i class="bi bi-people"></i> Clients
+    </a>
+    <a href="{{ url_for('employee.documents_list') }}" class="ca-nav-item {% if request.endpoint == 'employee.documents_list' %}active{% endif %}">
+        <i class="bi bi-folder2-open"></i> Documents
+    </a>
+    <a href="{{ url_for('employee.requests_list') }}" class="ca-nav-item {% if request.endpoint == 'employee.requests_list' %}active{% endif %}">
+        <i class="bi bi-clock-history"></i> My Requests
+    </a>
+    {% elif current_user.role == 'client' %}
+    <a href="{{ url_for('client_portal.view_profile') }}" class="ca-nav-item {% if request.endpoint == 'client_portal.view_profile' %}active{% endif %}">
+        <i class="bi bi-person-circle"></i> My Profile
+    </a>
+    <a href="{{ url_for('client_portal.documents_list') }}" class="ca-nav-item {% if request.endpoint == 'client_portal.documents_list' %}active{% endif %}">
+        <i class="bi bi-folder2-open"></i> Documents
+    </a>
+    {% endif %}
+
+    {% if current_user.role == 'admin' %}
+    <span class="text-uppercase small fw-bold mt-4 mb-2 px-3" style="color: #475569;">Administration</span>
+    <a href="{{ url_for('admin.system_admins_list') }}" class="ca-nav-item {% if request.endpoint in ['admin.system_admins_list', 'admin.create_system_admin'] %}active{% endif %}">
+        <i class="bi bi-shield-lock"></i> System Admins
+    </a>
+    <a href="{{ url_for('admin.employees_list') }}" class="ca-nav-item {% if request.endpoint == 'admin.employees_list' %}active{% endif %}">
+        <i class="bi bi-person-badge"></i> Employees
+    </a>
+    <a href="{{ url_for('admin.clients_list') }}" class="ca-nav-item {% if request.endpoint == 'admin.clients_list' %}active{% endif %}">
+        <i class="bi bi-people"></i> Clients
+    </a>
+    <a href="{{ url_for('admin.import_clients') }}" class="ca-nav-item {% if request.endpoint in ['admin.import_clients', 'admin.import_preview'] %}active{% endif %}">
+        <i class="bi bi-file-earmark-excel"></i> Bulk Import
+    </a>
+    <a href="{{ url_for('admin.documents_list') }}" class="ca-nav-item {% if request.endpoint == 'admin.documents_list' %}active{% endif %}">
+        <i class="bi bi-folder2-open"></i> Documents
+    </a>
+    <a href="{{ url_for('admin.approvals_list') }}" class="ca-nav-item {% if request.endpoint == 'admin.approvals_list' %}active{% endif %}">
+        <i class="bi bi-shield-check"></i> Pending Approvals
+    </a>
+    {% endif %}
+
+    {% if current_user.role in ['admin', 'employee'] %}
+    <span class="text-uppercase small fw-bold mt-4 mb-2 px-3" style="color: #475569;">Practice</span>
+    <a href="#" class="ca-nav-item">
+        <i class="bi bi-list-task"></i> Tasks & Returns
+    </a>
+    <a href="#" class="ca-nav-item">
+        <i class="bi bi-receipt"></i> Invoices
+    </a>
+    {% endif %}
+</div>
+
+<div class="mt-auto p-3">
+    <div class="p-3 rounded bg-dark bg-opacity-25 border border-secondary border-opacity-25">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 32px; height: 32px;">
+                {{ current_user.full_name[:2].upper() if current_user else 'U' }}
+            </div>
+            <div>
+                <p class="mb-0 text-white small fw-bold lh-1">{{ current_user.full_name if current_user else 'User' }}</p>
+                <p class="mb-0 small" style="color: #94A3B8;">{{ current_user.role | title }}</p>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="{{ url_for('auth.change_password') }}" class="btn btn-sm btn-outline-light w-100 border-secondary text-decoration-none mb-2">
+                <i class="bi bi-key me-1"></i> Change Password
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-light w-100 border-secondary text-decoration-none">
+                <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+            </a>
+        </div>
+    </div>
+</div>

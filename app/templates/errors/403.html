@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}403 — Access Denied{% endblock %}
+{% block body_class %}ca-auth-page{% endblock %}
+
+{% block auth_content %}
+<div class="ca-error-container">
+    <div class="text-center ca-card p-5" style="max-width: 500px; border-top: 4px solid var(--ca-primary);">
+        <div class="ca-error-code">403</div>
+        <h2 class="fw-bold mb-3 text-dark">Access Denied</h2>
+        <p class="text-muted mb-4">You do not have the required permissions to view this directory or page using the credentials that you supplied.</p>
+        <div class="d-flex gap-2">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary w-50 pt-2 pb-2">
+                Go Back
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-primary w-50 pt-2 pb-2">
+                Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

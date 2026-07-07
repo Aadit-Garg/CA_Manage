@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Unlock Document — CA Manage{% endblock %}
+
+{% block auth_content %}
+<div class="ca-login-wrapper">
+    <div class="ca-login-box">
+        <div class="text-center mb-4">
+            <i class="bi bi-shield-lock text-warning" style="font-size: 2.5rem;"></i>
+            <h2 class="fw-bold mt-2 mb-1">Protected Document</h2>
+            <p class="text-muted small">Verification is required to access this file.</p>
+        </div>
+
+        <div class="alert alert-info py-2 small mb-4">
+            <i class="bi bi-info-circle me-2"></i><strong>Document:</strong> {{ document.title }}
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-4">
+                <label class="form-label fw-semibold text-dark small">{{ form.password.label.text }}</label>
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
+                Unlock PDF
+            </button>
+            <a href="{{ url_for('client_portal.documents_list') }}" class="btn btn-link w-100 mt-2 small text-decoration-none text-muted">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Redirect for inline blocks when logged in but rendering inside structural base -->
+<script>
+    window.location.href = "{{ url_for('client_portal.unlock_document', id=document.id, action=request.args.get('action', 'download')) }}";
+</script>
+{% endblock %}

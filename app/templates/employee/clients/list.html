@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Clients — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-0">Clients Directory</h3>
+    <p class="text-muted small mb-0">Browse active clients, retrieve contact cards, and manage folders.</p>
+</div>
+
+<!-- Search Form -->
+<div class="ca-card mb-4">
+    <div class="ca-card-body py-3">
+        <form method="GET" action="{{ url_for('employee.clients_list') }}" class="row g-2 align-items-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, code, PAN, GST..." value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary px-3">Apply</button>
+                {% if search %}
+                <a href="{{ url_for('employee.clients_list') }}" class="btn btn-sm btn-outline-secondary px-3">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Client Table -->
+<div class="ca-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Code</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Name</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Email</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Phone</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">PAN</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if clients %}
+                    {% for client in clients %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-secondary">{{ client.client_code }}</td>
+                        <td>
+                            <div>
+                                <span class="fw-medium text-dark d-block">{{ client.full_name }}</span>
+                                {% if client.firm_name %}
+                                <small class="text-muted">{{ client.firm_name }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ client.email }}</td>
+                        <td>{{ client.phone or '—' }}</td>
+                        <td><code>{{ client.PAN or '—' }}</code></td>
+                        <td class="pe-4 text-end">
+                            <a href="{{ url_for('employee.view_client', id=client.id) }}" class="btn btn-sm btn-outline-primary py-1 px-3">
+                                <i class="bi bi-eye me-1"></i>View Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-2 d-block mb-2"></i>
+                            No active clients found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="ca-card-footer d-flex justify-content-between align-items-center py-3 border-top px-4">
+        <span class="text-muted small">
+            Showing Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.pages }}</strong>
+        </span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('employee.clients_list', page=pagination.prev_num, search=search) }}">Previous</a>
+                </li>
+                {% for p in pagination.iter_pages() %}
+                    {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('employee.clients_list', page=p, search=search) }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('employee.clients_list', page=pagination.next_num, search=search) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Employee Details — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.employees_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Employees
+    </a>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h3 class="fw-bold mb-0">{{ employee.full_name }}</h3>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_employee', id=employee.id) }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i>Edit Profile
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Employee Stats Card -->
+    <div class="col-lg-4">
+        <div class="ca-card text-center p-4 mb-4">
+            <div class="bg-dark bg-opacity-10 text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                {{ employee.full_name[:2].upper() }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ employee.full_name }}</h4>
+            <p class="text-muted small mb-3">{{ employee.designation or 'No Designation' }}</p>
+            
+            <div class="border-top pt-3">
+                <div class="row text-center">
+                    <div class="col">
+                        <small class="text-muted d-block uppercase mb-1">Status</small>
+                        {% if employee.status == 'Active' and employee.user.is_active %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Disabled</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Summary Placeholder -->
+        <div class="ca-card">
+            <div class="ca-card-header">Attendance Summary</div>
+            <div class="ca-card-body">
+                <p class="small text-muted mb-0">Attendance tracking will be integrated in the Attendance module.</p>
+                <div class="text-center py-4 text-secondary">
+                    <i class="bi bi-calendar-check fs-2 d-block mb-1 text-muted"></i>
+                    <span class="small">— No Records ─</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal & Work Details -->
+    <div class="col-lg-8">
+        <div class="ca-card mb-4">
+            <div class="ca-card-header">Work Profile Details</div>
+            <div class="ca-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Email Address</small>
+                        <span class="fw-medium text-dark">{{ employee.email }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Phone Number</small>
+                        <span class="fw-medium text-dark">{{ employee.phone or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Designation</small>
+                        <span class="fw-medium text-dark">{{ employee.designation or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Joining Date</small>
+                        <span class="fw-medium text-dark">{{ employee.joining_date.strftime('%B %d, %Y') if employee.joining_date else '—' }}</span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Notes</small>
+                        <span class="fw-medium text-dark">{{ employee.notes or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ca-card">
+            <div class="ca-card-header">Account Metadata</div>
+            <div class="ca-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Last Login</small>
+                        <span class="fw-medium text-dark">{{ employee.user.last_login.strftime('%B %d, %Y %I:%M %p') if employee.user.last_login else 'Never' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Password Last Changed</small>
+                        <span class="fw-medium text-dark">{{ employee.user.password_changed_at.strftime('%B %d, %Y %I:%M %p') if employee.user.password_changed_at else 'Never' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Client Details — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('employee.clients_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Clients
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">{{ client.full_name }} <span class="text-secondary">({{ client.client_code }})</span></h3>
+    {% if client.upload_id %}
+    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-2" title="Upload ID" onclick="navigator.clipboard.writeText('{{ client.upload_id }}'); alert('Copied Upload ID!');" style="cursor:pointer;">
+        <i class="bi bi-clipboard me-1"></i>{{ client.upload_id }}
+    </span>
+    {% endif %}
+    <p class="text-muted small mt-2 mb-0">Contact card and registration context.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="ca-card text-center p-4 mb-4">
+            <div class="bg-dark bg-opacity-10 text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                {{ client.full_name[:2].upper() }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ client.full_name }}</h4>
+            <p class="text-muted small mb-2">{{ client.firm_name or 'Individual Client' }}</p>
+            <span class="badge bg-secondary mb-3">{{ client.client_type | title }}</span>
+        </div>
+        
+        <div class="ca-card">
+            <div class="ca-card-header d-flex justify-content-between align-items-center">
+                <span>Document History</span>
+                <span class="badge bg-primary rounded-pill">{{ documents|length }}</span>
+            </div>
+            <div class="ca-card-body p-0">
+                {% if documents %}
+                    <div class="list-group list-group-flush">
+                        {% for doc in documents[:5] %}
+                        <div class="list-group-item px-3 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-truncate me-2">
+                                    <a href="{{ doc.cloudinary_url }}" target="_blank" class="fw-medium text-decoration-none text-dark d-block text-truncate small">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ doc.title }}
+                                    </a>
+                                </div>
+                                <small class="text-muted text-nowrap" style="font-size: 0.75rem;">{{ doc.created_at.strftime('%b %d') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-folder-check fs-2 text-muted mb-2 d-block"></i>
+                        <h5 class="fw-bold text-dark mb-1">0 Documents</h5>
+                        <small class="text-secondary">Document upload history is empty.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="ca-card mb-4">
+            <div class="ca-card-header">Contact & Business Information</div>
+            <div class="ca-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Email Address</small>
+                        <a href="mailto:{{ client.email }}" class="fw-medium text-primary text-decoration-none">{{ client.email }}</a>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Phone Number</small>
+                        <span class="fw-medium text-dark">{{ client.phone or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">PAN</small>
+                        <span class="fw-medium text-dark"><code>{{ client.PAN or '—' }}</code></span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">GSTIN</small>
+                        <span class="fw-medium text-dark"><code>{{ client.GST or '—' }}</code></span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Billing Address</small>
+                        <span class="fw-medium text-dark">
+                            {% if client.address %}
+                                {{ client.address }}, {{ client.city or '' }} {{ client.state or '' }} {{ client.pincode or '' }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Internal Consultant Notes</small>
+                        <span class="fw-medium text-dark">{{ client.notes or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

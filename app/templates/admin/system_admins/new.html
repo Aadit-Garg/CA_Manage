@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}New System Admin — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.system_admins_list') }}" class="text-decoration-none small fw-medium mb-2 d-inline-block">
+        <i class="bi bi-arrow-left me-1"></i> Back to Admins
+    </a>
+    <h3 class="fw-bold mb-0">Create System Administrator</h3>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="ca-card">
+            <div class="ca-card-body p-4">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.full_name.label(class="form-label fw-semibold small text-dark") }}
+                        {{ form.full_name(class="form-control", placeholder="e.g. Rahul Sharma") }}
+                        {% for error in form.full_name.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.email.label(class="form-label fw-semibold small text-dark") }}
+                            {{ form.email(class="form-control", placeholder="e.g. rahul@example.com") }}
+                            {% for error in form.email.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            {{ form.phone.label(class="form-label fw-semibold small text-dark") }}
+                            {{ form.phone(class="form-control", placeholder="e.g. +91 9999999999") }}
+                            {% for error in form.phone.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4 text-muted border-opacity-25">
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.system_admins_list') }}" class="btn btn-light fw-medium">Cancel</a>
+                        {{ form.submit(class="btn btn-primary fw-medium px-4") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

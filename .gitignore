@@ -1,0 +1,56 @@
+# ──────────────────────────────────────────────
+# CA Manage — .gitignore
+# ──────────────────────────────────────────────
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.sqlite3
+instance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+
+# Flask-Migrate
+migrations/versions/__pycache__/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# Distribution
+*.tar.gz
+*.whl

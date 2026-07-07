@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}My Profile — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-1">My Account</h3>
+    <p class="text-muted small mb-0">Manage password and view your registration details.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Quick Actions & Status -->
+    <div class="col-lg-4">
+        <div class="ca-card text-center p-4 mb-4">
+            <div class="bg-dark bg-opacity-10 text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                {{ client.full_name[:2].upper() }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ client.full_name }}</h4>
+            <p class="text-muted small mb-3">{{ client.client_code }}</p>
+            
+            <a href="{{ url_for('client_portal.change_password') }}" class="btn btn-sm btn-primary w-100 mb-2">
+                <i class="bi bi-key me-2"></i>Change Password
+            </a>
+        </div>
+
+        <div class="ca-card bg-light border-0">
+            <div class="ca-card-body">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle me-1 text-primary"></i>Profile Locked</h6>
+                <p class="small text-muted mb-0">Business particulars (PAN, GSTIN, and Firm Name) are managed internally by the firm. Please contact your administrator if you need to modify this information.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="col-lg-8">
+        <div class="ca-card">
+            <div class="ca-card-header">Account Information</div>
+            <div class="ca-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Full Name</small>
+                        <span class="fw-medium text-dark">{{ client.full_name }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Firm/Business Name</small>
+                        <span class="fw-medium text-dark">{{ client.firm_name or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Email Address</small>
+                        <span class="fw-medium text-dark">{{ client.email }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Phone Number</small>
+                        <span class="fw-medium text-dark">{{ client.phone or '—' }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Permanent Account Number (PAN)</small>
+                        <span class="fw-medium text-dark"><code>{{ client.PAN or '—' }}</code></span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">GSTIN</small>
+                        <span class="fw-medium text-dark"><code>{{ client.GST or '—' }}</code></span>
+                    </div>
+                    <div class="col-12 border-top pt-3 mt-3">
+                        <small class="text-muted d-block">Billing Address</small>
+                        <span class="fw-medium text-dark">
+                            {% if client.address %}
+                                {{ client.address }}, {{ client.city or '' }} {{ client.state or '' }} {{ client.pincode or '' }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

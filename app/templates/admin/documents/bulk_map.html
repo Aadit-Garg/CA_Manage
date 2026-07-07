@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Map Bulk Uploads — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.bulk_upload') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Bulk Upload
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">Map Documents to Clients</h3>
+    <p class="text-muted small mb-0">Assign client contexts, titles, and categories to each uploaded file.</p>
+</div>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row g-4">
+        {% for file in files %}
+        <div class="col-12">
+            <div class="ca-card">
+                <div class="ca-card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold small text-dark"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>File #{{ loop.index }}: {{ file.original_filename }}</span>
+                    <span class="text-muted small">{{ (file.file_size / 1024 / 1024) | round(2) }} MB</span>
+                </div>
+                <div class="ca-card-body">
+                    <div class="row g-3">
+                        <!-- Client Dropdown -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark small">Assign Client</label>
+                            <select name="client_id_{{ loop.index0 }}" class="form-select form-select-sm" required>
+                                <option value="">Select Client...</option>
+                                {% for c_id, c_label in clients %}
+                                <option value="{{ c_id }}">{{ c_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Title -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark small">Document Title</label>
+                            <input type="text" name="title_{{ loop.index0 }}" class="form-control form-control-sm" value="{{ file.original_filename.replace('.pdf', '') }}" required>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark small">Category</label>
+                            <select name="type_{{ loop.index0 }}" class="form-select form-select-sm" required>
+                                {% for type in doc_types %}
+                                <option value="{{ type }}">{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Year -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-dark small">FY</label>
+                            <select name="year_{{ loop.index0 }}" class="form-select form-select-sm">
+                                <option value="2023-24">2023-24</option>
+                                <option value="2024-25">2024-25</option>
+                                <option value="2025-26" selected>2025-26</option>
+                                <option value="2026-27">2026-27</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="col-12 text-end">
+            <a href="{{ url_for('admin.bulk_upload') }}" class="btn btn-outline-secondary px-4 py-2 me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4 py-2">Publish Documents</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

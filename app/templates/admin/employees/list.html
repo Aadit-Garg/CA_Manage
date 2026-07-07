@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Employees — CA Manage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Employees</h3>
+        <p class="text-muted small mb-0">Manage firm employees, designations, and account access</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.create_employee') }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>New Employee
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filtering -->
+<div class="ca-card mb-4">
+    <div class="ca-card-body py-3">
+        <form method="GET" action="{{ url_for('admin.employees_list') }}" class="row g-2 align-items-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, email, phone..." value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary px-3">Apply</button>
+                {% if search %}
+                <a href="{{ url_for('admin.employees_list') }}" class="btn btn-sm btn-outline-secondary px-3">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Employee List Grid -->
+<div class="ca-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Name</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Email</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Phone</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Designation</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Status</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if employees %}
+                    {% for emp in employees %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-dark bg-opacity-10 text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                    {{ emp.full_name[:2].upper() }}
+                                </div>
+                                <span class="fw-medium text-dark">{{ emp.full_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ emp.email }}</td>
+                        <td>{{ emp.phone or '—' }}</td>
+                        <td>{{ emp.designation or '—' }}</td>
+                        <td>
+                            {% if emp.status == 'Active' and emp.user.is_active %}
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a href="{{ url_for('admin.view_employee', id=emp.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View Profile">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('admin.edit_employee', id=emp.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('admin.reset_employee_password', id=emp.id) }}" class="btn btn-sm btn-outline-warning py-1 px-2" title="Reset Password">
+                                    <i class="bi bi-key"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.toggle_employee_status', id=emp.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    {% if emp.user.is_active %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Disable" onclick="return confirm('Are you sure you want to disable this employee account?')">
+                                        <i class="bi bi-person-x"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Enable">
+                                        <i class="bi bi-person-check"></i>
+                                    </button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-person-badge fs-2 d-block mb-2"></i>
+                            No employees found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="ca-card-footer d-flex justify-content-between align-items-center py-3 border-top px-4">
+        <span class="text-muted small">
+            Showing Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.pages }}</strong>
+        </span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.employees_list', page=pagination.prev_num, search=search) }}">Previous</a>
+                </li>
+                {% for p in pagination.iter_pages() %}
+                    {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.employees_list', page=p, search=search) }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.employees_list', page=pagination.next_num, search=search) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

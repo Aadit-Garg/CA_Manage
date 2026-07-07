@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Edit Document — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.documents_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Documents
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">Edit Document Details: {{ document.title }}</h3>
+    <p class="text-muted small mb-0">Modify metadata tags or password settings directly.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="ca-card">
+            <div class="ca-card-header">Document Meta Details</div>
+            <div class="ca-card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-dark small">{{ form.title.label.text }}</label>
+                            {{ form.title }}
+                            {% for error in form.title.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.document_type.label.text }}</label>
+                            {{ form.document_type }}
+                            {% for error in form.document_type.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.financial_year.label.text }}</label>
+                            {{ form.financial_year }}
+                            {% for error in form.financial_year.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-dark small">{{ form.description.label.text }}</label>
+                            {{ form.description }}
+                            {% for error in form.description.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-dark small">{{ form.tags.label.text }}</label>
+                            {{ form.tags }}
+                            {% for error in form.tags.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12 border-top pt-3 mt-3">
+                            <div class="form-check mb-2">
+                                {{ form.password_protected }}
+                                <label class="form-check-label fw-semibold text-dark small" for="password_protected">
+                                    Protect PDF with Password
+                                </label>
+                            </div>
+                            <div id="password_section" class="d-none">
+                                <label class="form-label fw-semibold text-dark small">{{ form.pdf_password.label.text }}</label>
+                                {{ form.pdf_password }}
+                                {% for error in form.pdf_password.errors %}
+                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 border-top pt-3 mt-4 d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('admin.documents_list') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-sm btn-primary") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var checkbox = document.getElementById('password_protected');
+    var pwSection = document.getElementById('password_section');
+    
+    function toggleSection() {
+        if (checkbox.checked) {
+            pwSection.classList.remove('d-none');
+        } else {
+            pwSection.classList.add('d-none');
+        }
+    }
+    
+    checkbox.addEventListener('change', toggleSection);
+    toggleSection();
+</script>
+{% endblock %}

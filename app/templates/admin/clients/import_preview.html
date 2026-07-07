@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Import Preview — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.import_clients') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Upload
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">Client Import Preview</h3>
+    <p class="text-muted small mb-0">Inspect records and verification issues before saving.</p>
+</div>
+
+<!-- Import Summary -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="ca-card bg-success bg-opacity-10 border-success p-3 text-center">
+            <h3 class="fw-bold text-success mb-1">{{ valid_rows | length }}</h3>
+            <span class="small fw-semibold text-success">Valid Rows (Ready to Import)</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ca-card bg-danger bg-opacity-10 border-danger p-3 text-center">
+            <h3 class="fw-bold text-danger mb-1">{{ invalid_rows | length }}</h3>
+            <span class="small fw-semibold text-danger">Invalid Rows (Will be Skipped)</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ca-card bg-primary bg-opacity-10 border-primary p-3 text-center">
+            <h3 class="fw-bold text-primary mb-1">{{ (valid_rows | length) + (invalid_rows | length) }}</h3>
+            <span class="small fw-semibold text-primary">Total Parsed Rows</span>
+        </div>
+    </div>
+</div>
+
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white border rounded">
+    <div>
+        <span class="small text-muted">Clicking import will commit only the <strong class="text-success">{{ valid_rows | length }} valid records</strong>.</span>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.import_clients') }}" class="btn btn-sm btn-outline-secondary me-2">Cancel</a>
+        {% if valid_rows %}
+        <form method="POST" action="{{ url_for('admin.commit_import') }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-primary px-4"><i class="bi bi-check2-circle me-1"></i>Import Valid Rows</button>
+        </form>
+        {% else %}
+        <button class="btn btn-sm btn-primary px-4" disabled>Import Valid Rows</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Invalid Rows (Errors) -->
+{% if invalid_rows %}
+<div class="ca-card mb-4 border-danger">
+    <div class="ca-card-header bg-danger bg-opacity-10 text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Validation Errors (Row Details)</div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4" style="width: 10%;">Row #</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3" style="width: 30%;">Client Name / Email</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3" style="width: 60%;">Specific Validation Failures</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% for row in invalid_rows %}
+                <tr>
+                    <td class="ps-4 fw-bold text-danger">Row {{ row.row_num }}</td>
+                    <td>
+                        <span class="fw-medium text-dark d-block">{{ row.full_name or '—' }}</span>
+                        <small class="text-muted">{{ row.email or '—' }}</small>
+                    </td>
+                    <td>
+                        <ul class="text-danger small ps-3 mb-0">
+                            {% for error in row.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Valid Rows Preview -->
+<div class="ca-card border-success">
+    <div class="ca-card-header bg-success bg-opacity-10 text-success fw-bold"><i class="bi bi-check-circle-fill me-2"></i>Valid Records Preview</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Row #</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Client Name</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Email</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Phone</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">PAN</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4">GSTIN</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if valid_rows %}
+                    {% for row in valid_rows %}
+                    <tr>
+                        <td class="ps-4 text-muted small">Row {{ row.row_num }}</td>
+                        <td class="fw-medium text-dark">{{ row.full_name }}</td>
+                        <td>{{ row.email }}</td>
+                        <td>{{ row.phone or '—' }}</td>
+                        <td><code>{{ row.PAN or '—' }}</code></td>
+                        <td class="pe-4"><code>{{ row.GST or '—' }}</code></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No valid rows found to import.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

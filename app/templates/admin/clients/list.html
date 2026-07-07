@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Clients — CA Manage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Clients</h3>
+        <p class="text-muted small mb-0">Manage corporate and individual client profiles</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.create_client') }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>New Client
+        </a>
+    </div>
+</div>
+
+<!-- Search, Filter & Toggles -->
+<div class="ca-card mb-4">
+    <div class="ca-card-body py-3">
+        <form method="GET" action="{{ url_for('admin.clients_list') }}" class="row g-2 align-items-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, code, PAN, GST..." value="{{ search }}">
+                </div>
+            </div>
+            
+            <div class="col-auto">
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active Clients</option>
+                    <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Soft Deleted (Inactive)</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary px-3">Apply</button>
+                {% if search or status_filter != 'Active' %}
+                <a href="{{ url_for('admin.clients_list') }}" class="btn btn-sm btn-outline-secondary px-3">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Client Grid Table -->
+<div class="ca-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Code</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Name</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Email</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">PAN</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">GSTIN</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Login Status</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if clients %}
+                    {% for client in clients %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-secondary">{{ client.client_code }}</td>
+                        <td>
+                            <div>
+                                <span class="fw-medium text-dark d-block">{{ client.full_name }}</span>
+                                {% if client.firm_name %}
+                                <small class="text-muted">{{ client.firm_name }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ client.email }}</td>
+                        <td><code>{{ client.PAN or '—' }}</code></td>
+                        <td><code>{{ client.GST or '—' }}</code></td>
+                        <td>
+                            {% if client.user.is_active %}
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Login Enabled</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Login Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a href="{{ url_for('admin.view_client', id=client.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View Profile">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('admin.edit_client', id=client.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('admin.reset_client_password', id=client.id) }}" class="btn btn-sm btn-outline-warning py-1 px-2" title="Reset Password">
+                                    <i class="bi bi-key"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.toggle_client_status', id=client.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    {% if client.user.is_active %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Disable Login" onclick="return confirm('Are you sure you want to disable login for this client?')">
+                                        <i class="bi bi-person-lock"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Enable Login">
+                                        <i class="bi bi-person-check"></i>
+                                    </button>
+                                    {% endif %}
+                                </form>
+                                
+                                {% if client.status == 'Active' %}
+                                <form method="POST" action="{{ url_for('admin.delete_client', id=client.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Soft Delete" onclick="return confirm('Are you sure you want to soft-delete this client profile?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('admin.restore_client', id=client.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Restore Profile">
+                                        <i class="bi bi-bootstrap-reboot"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-2 d-block mb-2"></i>
+                            No clients found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="ca-card-footer d-flex justify-content-between align-items-center py-3 border-top px-4">
+        <span class="text-muted small">
+            Showing Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.pages }}</strong>
+        </span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.clients_list', page=pagination.prev_num, search=search, status=status_filter) }}">Previous</a>
+                </li>
+                {% for p in pagination.iter_pages() %}
+                    {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.clients_list', page=p, search=search, status=status_filter) }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.clients_list', page=pagination.next_num, search=search, status=status_filter) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

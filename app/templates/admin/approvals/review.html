@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Review Request — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('admin.approvals_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Approvals Queue
+    </a>
+    <h3 class="fw-bold mt-2 mb-0">Review Approval Request</h3>
+    <p class="text-muted small mb-0">Submitted by <strong>{{ req.employee.full_name }}</strong> on {{ req.created_at.strftime('%b %d, %Y %I:%M %p') }}</p>
+</div>
+
+<div class="row g-4">
+    <!-- Diff & Values Comparison -->
+    <div class="col-lg-8">
+        <div class="ca-card mb-4">
+            <div class="ca-card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark">Comparison Diff</span>
+                <span class="badge bg-secondary">{{ req.request_type }} Request</span>
+            </div>
+            <div class="ca-card-body">
+                {% if req.document %}
+                <div class="p-3 mb-4 rounded bg-light border">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Client Profile</span>
+                            <strong>{{ req.document.client.full_name }} ({{ req.document.client.client_code }})</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Target Title</span>
+                            <strong>{{ req.document.title }}</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Side by Side Details Comparison -->
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small text-muted text-uppercase fw-semibold" style="width: 25%;">Field</th>
+                                <th class="small text-muted text-uppercase fw-semibold" style="width: 37.5%;">Previous / Current Value</th>
+                                <th class="small text-muted text-uppercase fw-semibold" style="width: 37.5%;">Proposed Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if req.request_type == 'Upload' %}
+                                <tr>
+                                    <td><strong>Document Title</strong></td>
+                                    <td><span class="text-muted">— Draft Creation —</span></td>
+                                    <td class="table-success"><strong>{{ proposed.get('title') }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Category</strong></td>
+                                    <td><span class="text-muted">—</span></td>
+                                    <td class="table-success">{{ proposed.get('document_type') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Financial Year</strong></td>
+                                    <td><span class="text-muted">—</span></td>
+                                    <td class="table-success">FY {{ proposed.get('financial_year') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Password Lock</strong></td>
+                                    <td><span class="text-muted">—</span></td>
+                                    <td>{{ 'Enabled' if proposed.get('password_protected') else 'Disabled' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Draft File Upload</strong></td>
+                                    <td>—</td>
+                                    <td>
+                                        <a href="{{ req.document.cloudinary_url }}" target="_blank" class="small text-decoration-none"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>{{ req.document.original_filename }}</a>
+                                        <span class="text-muted small d-block">({{ (req.document.file_size / 1024 / 1024) | round(2) }} MB)</span>
+                                    </td>
+                                </tr>
+
+                            {% elif req.request_type == 'Replace' %}
+                                <tr>
+                                    <td><strong>Original Filename</strong></td>
+                                    <td><span class="text-muted text-break">{{ prev.get('original_filename') }}</span></td>
+                                    <td class="table-success fw-bold text-break"><i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ proposed.get('original_filename') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>File Size</strong></td>
+                                    <td><span class="text-muted">{{ (prev.get('file_size') / 1024 / 1024) | round(2) }} MB</span></td>
+                                    <td>{{ (proposed.get('file_size') / 1024 / 1024) | round(2) }} MB</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>PDF Link Preview</strong></td>
+                                    <td><a href="{{ prev.get('cloudinary_url') }}" target="_blank" class="small text-decoration-none">Current File</a></td>
+                                    <td class="table-success"><a href="{{ proposed.get('cloudinary_url') }}" target="_blank" class="small text-decoration-none fw-bold">Replacement Draft</a></td>
+                                </tr>
+
+                            {% elif req.request_type == 'Metadata Edit' %}
+                                {% for field in ['title', 'document_type', 'financial_year', 'description'] %}
+                                {% if prev.get(field) != proposed.get(field) %}
+                                <tr>
+                                    <td><strong>{{ field.replace('_', ' ') | title }}</strong></td>
+                                    <td class="text-muted">{{ prev.get(field) or '—' }}</td>
+                                    <td class="table-success fw-bold">{{ proposed.get(field) or '—' }}</td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+
+                            {% elif req.request_type == 'Delete' %}
+                                <tr>
+                                    <td><strong>Target Action</strong></td>
+                                    <td>Active</td>
+                                    <td class="table-danger fw-bold">Soft Delete (Inactive)</td>
+                                </tr>
+
+                            {% elif req.request_type == 'Password Change' %}
+                                <tr>
+                                    <td><strong>Password Protect</strong></td>
+                                    <td>{{ 'Enabled' if prev.get('password_protected') else 'Disabled' }}</td>
+                                    <td class="table-warning fw-bold">{{ 'Enabled' if proposed.get('password_protected') else 'Disabled' }}</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Panel (Right) -->
+    <div class="col-lg-4">
+        <!-- Approve Card -->
+        <div class="ca-card mb-4 border-success">
+            <div class="ca-card-header bg-success bg-opacity-10 text-success fw-bold">Approve Action</div>
+            <div class="ca-card-body small">
+                <p class="text-muted mb-3">Accepting this request executes the proposed modifications instantly.</p>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn btn-success w-100 fw-semibold"><i class="bi bi-check2 me-1"></i>Approve & Commit</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reject Card -->
+        <div class="ca-card border-danger">
+            <div class="ca-card-header bg-danger bg-opacity-10 text-danger fw-bold">Reject Action</div>
+            <div class="ca-card-body small">
+                <p class="text-muted mb-3">Rejecting aborts changes. Draft files uploaded will be cleaned from Cloudinary storage.</p>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="reject">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small">Reason for Rejection</label>
+                        <textarea name="rejection_reason" class="form-control form-control-sm" rows="3" placeholder="Explain why the request is rejected..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 fw-semibold"><i class="bi bi-x-circle me-1"></i>Reject & Log</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

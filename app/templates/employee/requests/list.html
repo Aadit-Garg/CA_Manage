@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}My Approval Requests — CA Manage{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-0">My Approval Requests</h3>
+    <p class="text-muted small mb-0">Track document uploads, metadata changes, and deletion requests</p>
+</div>
+
+<!-- Requests Table -->
+<div class="ca-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Submission Date</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Document Title</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Request Type</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Status</th>
+                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 pe-4">Details</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if requests %}
+                    {% for req in requests %}
+                    <tr>
+                        <td class="ps-4 text-muted small">{{ req.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                        <td class="fw-medium">
+                            {{ req.document.title if req.document else 'Deleted Document' }}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">{{ req.request_type }}</span>
+                        </td>
+                        <td>
+                            {% if req.status == 'Pending' %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1"><i class="bi bi-clock me-1"></i>Pending Review</span>
+                            {% elif req.status == 'Approved' %}
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                            {% elif req.status == 'Rejected' %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4">
+                            {% if req.status == 'Rejected' and req.rejection_reason %}
+                                <span class="small text-danger">Reason: {{ req.rejection_reason }}</span>
+                            {% elif req.reviewed_at %}
+                                <span class="small text-muted">Reviewed on {{ req.reviewed_at.strftime('%b %d, %Y') }}</span>
+                            {% else %}
+                                <span class="small text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-list-task fs-2 d-block mb-2"></i>
+                            No approval requests found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="ca-card-footer d-flex justify-content-between align-items-center py-3 border-top px-4">
+        <span class="text-muted small">
+            Showing Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.pages }}</strong>
+        </span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('employee.requests_list', page=pagination.prev_num) }}">Previous</a>
+                </li>
+                {% for p in pagination.iter_pages() %}
+                    {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('employee.requests_list', page=p) }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('employee.requests_list', page=pagination.next_num) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

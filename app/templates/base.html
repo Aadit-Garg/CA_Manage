@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CA Manage{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS (Loaded Locally) -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    
+    <!-- Bootstrap Icons (Cloudflare CDN) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+
+    {% if current_user.is_authenticated %}
+        <!-- CSS Grid Layout -->
+        <div class="ca-desktop-grid">
+            
+            <!-- Fixed Sidebar -->
+            <aside class="ca-sidebar">
+                {% include 'components/_sidebar.html' %}
+            </aside>
+
+            <!-- Fixed Header -->
+            <header class="ca-header">
+                {% include 'components/_navbar.html' %}
+            </header>
+
+            <!-- Scrollable Main Content -->
+            <main class="ca-main">
+                <div class="container-fluid p-0">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+
+        </div>
+    {% else %}
+        <!-- Unauthenticated Layout -->
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+
+    {% include 'components/_toasts.html' %}
+    
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>
