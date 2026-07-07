@@ -47,33 +47,16 @@ def dashboard():
     from ..models.audit import AuditLog
     recent_activity = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(8).all()
     
-    # Analytics - Attendance Data (Last 7 Days)
-    from datetime import datetime, timedelta, timezone
-    today = datetime.now(timezone.utc).date()
-    days = [(today - timedelta(days=i)) for i in range(6, -1, -1)]
+    # Recent requests and upload sessions
+    recent_requests = ApprovalRequest.query.order_by(ApprovalRequest.created_at.desc()).limit(5).all()
+    recent_upload_sessions = UploadSession.query.order_by(UploadSession.created_at.desc()).limit(5).all()
     
-    from ..models.attendance import Attendance
-    attendance_labels = [d.strftime('%b %d') for d in days]
-    attendance_data = []
-    
-    for d in days:
-        count = Attendance.query.filter(Attendance.date == d, Attendance.status == 'Present').count()
-        attendance_data.append(count)
-        
-    chart_data = {
-        'attendance': {
-            'labels': attendance_labels,
-            'data': attendance_data
-        }
-    }
-
     return render_template(
         'admin/dashboard.html',
         stats=stats,
         recent_requests=recent_requests,
         recent_upload_sessions=recent_upload_sessions,
-        recent_activity=recent_activity,
-        chart_data=chart_data
+        recent_activity=recent_activity
     )
 
 

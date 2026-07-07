@@ -7,11 +7,14 @@
         <h3 class="fw-bold mb-0">Admin Dashboard</h3>
         <p class="text-muted small mb-0">Welcome back, {{ current_user.full_name }}</p>
     </div>
+    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#customizeModal">
+        <i class="bi bi-gear me-1"></i> Customize
+    </button>
 </div>
 
-<!-- Key Metrics -->
+<!-- Key Metrics (always visible) -->
 <div class="row g-4 mb-4">
-    <div class="col-3">
+    <div class="col-6 col-md-3">
         <div class="ca-card">
             <div class="ca-card-body d-flex justify-content-between align-items-center">
                 <div>
@@ -22,7 +25,7 @@
             </div>
         </div>
     </div>
-    <div class="col-3">
+    <div class="col-6 col-md-3">
         <div class="ca-card">
             <div class="ca-card-body d-flex justify-content-between align-items-center">
                 <div>
@@ -33,7 +36,7 @@
             </div>
         </div>
     </div>
-    <div class="col-3">
+    <div class="col-6 col-md-3">
         <div class="ca-card">
             <div class="ca-card-body d-flex justify-content-between align-items-center">
                 <div>
@@ -44,135 +47,249 @@
             </div>
         </div>
     </div>
-    <div class="col-3">
+    <div class="col-6 col-md-3">
         <div class="ca-card">
             <div class="ca-card-body d-flex justify-content-between align-items-center">
                 <div>
-                    <p class="text-muted small fw-bold text-uppercase mb-1">Active Employees</p>
-                    <h3 class="fw-bold mb-0 text-success">{{ stats.active_employees }}</h3>
+                    <p class="text-muted small fw-bold text-uppercase mb-1">Pending Approvals</p>
+                    <h3 class="fw-bold mb-0 text-warning">{{ stats.pending_approvals }}</h3>
                 </div>
-                <div class="bg-success bg-opacity-10 text-success rounded p-2"><i class="bi bi-person-badge fs-4"></i></div>
+                <div class="bg-warning bg-opacity-10 text-warning rounded p-2"><i class="bi bi-shield-check fs-4"></i></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Analytics and Activity Feed -->
-<div class="row g-4">
-    <!-- Chart.js Graph -->
-    <div class="col-md-7">
-        <div class="ca-card h-100">
-            <div class="ca-card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-graph-up me-2"></i> Attendance Overview (Last 7 Days)</span>
+<!-- Collapsible Widget: Activity Feed -->
+<div class="dashboard-widget mb-4" data-widget-id="analytics" id="widget-analytics">
+    <!-- Activity Feed -->
+    <div class="ca-card h-100">
+        <div class="ca-card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-activity me-2"></i> Recent Activity</span>
+            <div>
+                <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-sm btn-link py-0 text-decoration-none">View All</a>
+                <button class="btn btn-sm btn-link p-0 text-muted widget-collapse-btn ms-2" data-widget="analytics" title="Toggle">
+                    <i class="bi bi-chevron-up"></i>
+                </button>
             </div>
-            <div class="ca-card-body">
-                <canvas id="attendanceChart" height="250"></canvas>
+        </div>
+        <div class="ca-card-body p-0 widget-body">
+            <div class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
+                {% if recent_activity %}
+                    {% for log in recent_activity %}
+                    <div class="list-group-item py-3 px-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">{{ log.created_at.strftime('%I:%M %p, %b %d') }}</small>
+                            <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.65rem;">{{ log.module }}</span>
+                        </div>
+                        <p class="mb-1 fw-medium text-dark">{{ log.description }}</p>
+                        <small class="text-muted"><i class="bi bi-person me-1"></i>{% if log.user %}{{ log.user.email }}{% else %}System{% endif %}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="py-4 text-center text-muted">No recent activity.</div>
+                {% endif %}
             </div>
         </div>
     </div>
-    
-    <!-- Activity Feed -->
-    <div class="col-md-5">
-        <div class="ca-card h-100">
-            <div class="ca-card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-activity me-2"></i> Recent Activity</span>
-                <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-sm btn-link py-0 text-decoration-none">View All</a>
-            </div>
-            <div class="ca-card-body p-0">
-                <div class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
-                    {% if recent_activity %}
-                        {% for log in recent_activity %}
-                        <div class="list-group-item py-3 px-4">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <small class="text-muted">{{ log.created_at.strftime('%I:%M %p, %b %d') }}</small>
-                                <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.65rem;">{{ log.module }}</span>
-                            </div>
-                            <p class="mb-1 fw-medium text-dark">{{ log.description }}</p>
-                            <small class="text-muted"><i class="bi bi-person me-1"></i>{% if log.user %}{{ log.user.email }}{% else %}System{% endif %}</small>
-                        </div>
+</div>
+
+<!-- Collapsible Widget: Recent Upload Sessions -->
+<div class="dashboard-widget mb-4" data-widget-id="uploads" id="widget-uploads">
+    <div class="ca-card">
+        <div class="ca-card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-cloud-arrow-up me-2"></i> Recent Bulk Uploads</span>
+            <button class="btn btn-sm btn-link p-0 text-muted widget-collapse-btn" data-widget="uploads" title="Toggle">
+                <i class="bi bi-chevron-up"></i>
+            </button>
+        </div>
+        <div class="table-responsive widget-body">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Date</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Uploader</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Total Files</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Success</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Failed</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% if recent_upload_sessions %}
+                        {% for session in recent_upload_sessions %}
+                        <tr>
+                            <td class="ps-4 fw-medium text-dark">{{ session.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                            <td>{{ session.user.full_name }} <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-1">{{ session.role | title }}</span></td>
+                            <td class="text-center fw-bold">{{ session.total_files }}</td>
+                            <td class="text-center text-success fw-bold">{{ session.successful_uploads }}</td>
+                            <td class="text-center text-danger fw-bold">{{ session.failed_uploads }}</td>
+                        </tr>
                         {% endfor %}
                     {% else %}
-                        <div class="py-4 text-center text-muted">No recent activity.</div>
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No bulk uploads recorded.</td>
+                        </tr>
                     {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Collapsible Widget: Recent Documents -->
+<div class="dashboard-widget mb-4" data-widget-id="documents" id="widget-documents">
+    <div class="ca-card">
+        <div class="ca-card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-folder2-open me-2"></i> Recent Documents</span>
+            <button class="btn btn-sm btn-link p-0 text-muted widget-collapse-btn" data-widget="documents" title="Toggle">
+                <i class="bi bi-chevron-up"></i>
+            </button>
+        </div>
+        <div class="table-responsive widget-body">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Title</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Category</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Client</th>
+                        <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-end pe-4">Uploaded</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% if stats.recent_documents %}
+                        {% for doc in stats.recent_documents %}
+                        <tr>
+                            <td class="ps-4 fw-medium text-dark">{{ doc.title }}</td>
+                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">{{ doc.category }}</span></td>
+                            <td>{{ doc.client.company_name }}</td>
+                            <td class="text-muted small text-end pe-4">{{ doc.created_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">No recent documents.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Customize Dashboard Modal -->
+<div class="modal fade" id="customizeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Customize Dashboard</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Toggle widget visibility. Your preferences are saved automatically.</p>
+                <div class="list-group">
+                    <label class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <span><i class="bi bi-activity me-2 text-primary"></i> Recent Activity Feed</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggle-analytics" data-widget="analytics" checked>
+                        </div>
+                    </label>
+                    <label class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <span><i class="bi bi-cloud-arrow-up me-2 text-info"></i> Recent Bulk Uploads</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggle-uploads" data-widget="uploads" checked>
+                        </div>
+                    </label>
+                    <label class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <span><i class="bi bi-folder2-open me-2 text-success"></i> Recent Documents</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggle-documents" data-widget="documents" checked>
+                        </div>
+                    </label>
                 </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetDashboard()">Reset to Default</button>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    // ── Dashboard Customization ─────────────────
+    const STORAGE_KEY = 'ca_dashboard_prefs';
     
-    // Parse the chart data safely using tojson filter
-    const chartData = {{ chart_data | tojson | safe }};
+    function loadPrefs() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        } catch { return {}; }
+    }
     
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.attendance.labels,
-            datasets: [{
-                label: 'Employees Present',
-                data: chartData.attendance.data,
-                borderColor: '#0ea5e9',
-                backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                }
+    function savePrefs(prefs) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    }
+    
+    function applyPrefs() {
+        const prefs = loadPrefs();
+        document.querySelectorAll('.dashboard-widget').forEach(widget => {
+            const id = widget.dataset.widgetId;
+            const hidden = prefs[id] === false;
+            const collapsed = prefs[id + '_collapsed'] === true;
+            
+            // Visibility
+            widget.style.display = hidden ? 'none' : '';
+            const toggle = document.getElementById('toggle-' + id);
+            if (toggle) toggle.checked = !hidden;
+            
+            // Collapsed
+            const bodies = widget.querySelectorAll('.widget-body');
+            const btn = widget.querySelector('.widget-collapse-btn i');
+            if (collapsed) {
+                bodies.forEach(b => b.style.display = 'none');
+                if (btn) btn.className = 'bi bi-chevron-down';
+            } else {
+                bodies.forEach(b => b.style.display = '');
+                if (btn) btn.className = 'bi bi-chevron-up';
             }
-        }
+        });
+    }
+    
+    // Toggle visibility from modal checkboxes
+    document.querySelectorAll('#customizeModal input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const prefs = loadPrefs();
+            prefs[this.dataset.widget] = this.checked;
+            savePrefs(prefs);
+            applyPrefs();
+        });
     });
+    
+    // Collapse/expand toggle buttons
+    document.querySelectorAll('.widget-collapse-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const widgetId = this.dataset.widget;
+            const prefs = loadPrefs();
+            prefs[widgetId + '_collapsed'] = !prefs[widgetId + '_collapsed'];
+            savePrefs(prefs);
+            applyPrefs();
+        });
+    });
+    
+    // Apply on load
+    applyPrefs();
+    
+    // Reset function
+    window.resetDashboard = function() {
+        localStorage.removeItem(STORAGE_KEY);
+        applyPrefs();
+        document.querySelectorAll('#customizeModal input[type="checkbox"]').forEach(cb => cb.checked = true);
+    };
 });
 </script>
 
-<!-- Recent Upload Sessions -->
-<div class="ca-card mt-4">
-    <div class="ca-card-header d-flex justify-content-between align-items-center">
-        <span>Recent Bulk Uploads</span>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 ps-4">Date</th>
-                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3">Uploader</th>
-                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Total Files</th>
-                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Success</th>
-                    <th class="small text-muted text-uppercase fw-semibold border-0 py-3 text-center">Failed</th>
-                </tr>
-            </thead>
-            <tbody class="border-top-0">
-                {% if recent_upload_sessions %}
-                    {% for session in recent_upload_sessions %}
-                    <tr>
-                        <td class="ps-4 fw-medium text-dark">{{ session.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
-                        <td>{{ session.user.full_name }} <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-1">{{ session.role | title }}</span></td>
-                        <td class="text-center fw-bold">{{ session.total_files }}</td>
-                        <td class="text-center text-success fw-bold">{{ session.successful_uploads }}</td>
-                        <td class="text-center text-danger fw-bold">{{ session.failed_uploads }}</td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">No bulk uploads recorded.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-</div>
+<style>
+.widget-body { transition: all 0.2s ease; }
+.widget-collapse-btn { text-decoration: none !important; }
+</style>
 {% endblock %}

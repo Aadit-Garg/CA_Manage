@@ -43,7 +43,17 @@
             <!-- Scrollable Main Content -->
             <main class="ca-main">
                 <div class="container-fluid p-0">
-                    {% block content %}{% endblock %}
+                    {% if requires_desktop %}
+                    <div class="mobile-warning">
+                        <i class="bi bi-display text-muted mb-3" style="font-size: 3.5rem;"></i>
+                        <h4 class="fw-bold">Desktop Required</h4>
+                        <p class="text-muted">Please use a desktop browser to access this feature.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="{% if requires_desktop %}desktop-content{% endif %}">
+                        {% block content %}{% endblock %}
+                    </div>
                 </div>
             </main>
 
@@ -54,6 +64,9 @@
     {% endif %}
 
     {% include 'components/_toasts.html' %}
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="ca-overlay" onclick="document.querySelector('.ca-sidebar').classList.remove('show'); this.classList.remove('show');"></div>
     
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </body>
