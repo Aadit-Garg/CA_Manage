@@ -10,11 +10,135 @@
         <input type="text" class="form-control ps-5 bg-light border-0" placeholder="Search everywhere...">
     </div>
 
-    <!-- Notification -->
-    <a href="#" class="text-muted position-relative">
-        <i class="bi bi-bell fs-5"></i>
-        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-white rounded-circle">
-            <span class="visually-hidden">New alerts</span>
-        </span>
-    </a>
+    <!-- Notification Dropdown -->
+    <div class="dropdown">
+        <a href="#" class="text-muted position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-bell fs-5"></i>
+            {% set unread_count = current_user.notifications.filter_by(is_read=False).count() %}
+            {% if unread_count > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                {{ unread_count }}
+                <span class="visually-hidden">unread messages</span>
+            </span>
+            {% endif %}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="notificationDropdown" style="width: 300px; max-height: 400px; overflow-y: auto;">
+            <li><h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                Notifications
+                {% if unread_count > 0 %}
+                <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="markAllRead(event)">Mark all read</button>
+                {% endif %}
+            </h6></li>
+            
+            {% set recent_notifications = current_user.notifications.limit(10).all() %}
+            {% if recent_notifications %}
+                {% for n in recent_notifications %}
+                <li>
+                    <a class="dropdown-item {% if not n.is_read %}fw-bold bg-light{% endif %}" href="{{ n.link or '#' }}" onclick="markRead(event, {{ n.id }}, '{{ n.link or '#' }}')">
+                        <small class="d-block text-muted">{{ n.created_at.strftime('%b %d, %H:%M') }}</small>
+                        <span class="text-wrap">{{ n.message }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li><span class="dropdown-item text-muted text-center">No notifications yet.</span></li>
+            {% endif %}
+            <li><hr class="dropdown-divider"></li>
+            <li class="px-3 py-2">
+                <button id="enableWebPushBtn" class="btn btn-sm btn-outline-primary w-100" onclick="subscribeToPush()">
+                    <i class="bi bi-bell-fill me-1"></i> Enable OS Notifications
+                </button>
+            </li>
+        </ul>
+    </div>
 </div>
+
+<script>
+function markRead(event, notifId, link) {
+    event.preventDefault();
+    fetch(`/auth/notifications/read/${notifId}`, { method: 'POST' })
+    .then(() => {
+        if(link && link !== '#') window.location.href = link;
+        else location.reload();
+    });
+}
+function markAllRead(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    fetch(`/auth/notifications/read-all`, { method: 'POST' })
+    .then(() => location.reload());
+}
+
+// Web Push Logic
+const urlBase64ToUint8Array = base64String => {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+};
+
+async function subscribeToPush() {
+    const btn = document.getElementById('enableWebPushBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Setting up...';
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('Push notifications are not supported by your browser.');
+        btn.innerHTML = 'Not Supported';
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            alert('Notification permission denied.');
+            btn.innerHTML = 'Permission Denied';
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+        const res = await fetch('/auth/notifications/vapid-public-key');
+        const data = await res.json();
+        const vapidPublicKey = data.public_key;
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+        });
+
+        await fetch('/auth/notifications/subscribe', {
+            method: 'POST',
+            body: JSON.stringify(subscription),
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Enabled';
+    } catch (error) {
+        console.error('Error subscribing to push:', error);
+        alert('Failed to enable push notifications.');
+        btn.innerHTML = 'Enable OS Notifications';
+        btn.disabled = false;
+    }
+}
+
+// Check existing subscription status
+document.addEventListener('DOMContentLoaded', async () => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) {
+                const btn = document.getElementById('enableWebPushBtn');
+                if(btn) {
+                    btn.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Enabled';
+                    btn.disabled = true;
+                }
+            }
+        }
+    }
+});
+</script>

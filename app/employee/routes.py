@@ -14,7 +14,10 @@ from ..models.client import ClientProfile
 from ..models.document import Document
 from ..models.approval import ApprovalRequest
 from ..models.upload_session import UploadSession
+from ..models.attendance import Attendance
 from ..extensions import db
+from ..utils.timeline import create_timeline_event
+from ..utils.notification import notify_admins
 from werkzeug.security import generate_password_hash
 from . import employee_bp
 
@@ -34,10 +37,24 @@ def dashboard():
         status='Pending'
     ).count()
 
+    from datetime import datetime, timezone
+    today = datetime.now(timezone.utc).date()
+    attendance_record = Attendance.query.filter_by(employee_id=current_user.id, date=today).first()
+    
+    if attendance_record:
+        if attendance_record.punch_out_time:
+            att_status = 'Punched Out'
+        elif attendance_record.punch_in_time:
+            att_status = 'Punched In'
+        else:
+            att_status = 'Not Punched In'
+    else:
+        att_status = 'Not Punched In'
+
     stats = {
         'assigned_clients': assigned_count,
         'pending_uploads': pending_count,
-        'attendance_status': '—',
+        'attendance_status': att_status,
     }
 
     # Get assigned client list (first 5)
@@ -60,7 +77,8 @@ def dashboard():
         stats=stats,
         assigned_clients=assigned_clients,
         recent_requests=recent_requests,
-        recent_upload_sessions=recent_upload_sessions
+        recent_upload_sessions=recent_upload_sessions,
+        attendance_record=attendance_record
     )
 
 
@@ -242,6 +260,17 @@ def upload_document():
             )
             db.session.add(req)
             db.session.commit()
+            
+            create_timeline_event(
+                client_id=doc.client_id,
+                event_type='Approval Request Created',
+                description=f'New Upload request for "{doc.title}".',
+                user_id=current_user.id,
+                document_id=doc.id
+            )
+            db.session.commit()
+            
+            notify_admins(f"New Document Upload Request for '{doc.title}' by {current_user.full_name}", url_for('admin.approvals_list'))
 
             flash(f"Upload request for '{doc.title}' submitted to administrators for approval.", 'success')
             return redirect(url_for('employee.requests_list'))
@@ -303,6 +332,17 @@ def replace_document(id):
             )
             db.session.add(req)
             db.session.commit()
+            
+            create_timeline_event(
+                client_id=doc.client_id,
+                event_type='Approval Request Created',
+                description=f'Replacement requested for "{doc.title}".',
+                user_id=current_user.id,
+                document_id=doc.id
+            )
+            db.session.commit()
+            
+            notify_admins(f"Document Replacement Request for '{doc.title}' by {current_user.full_name}", url_for('admin.approvals_list'))
 
             flash(f"Replacement request for '{doc.title}' submitted for admin approval.", 'success')
             return redirect(url_for('employee.requests_list'))
@@ -344,6 +384,17 @@ def edit_document(id):
         )
         db.session.add(req)
         db.session.commit()
+        
+        create_timeline_event(
+            client_id=doc.client_id,
+            event_type='Approval Request Created',
+            description=f'Metadata edit requested for "{doc.title}".',
+            user_id=current_user.id,
+            document_id=doc.id
+        )
+        db.session.commit()
+        
+        notify_admins(f"Metadata Edit Request for '{doc.title}' by {current_user.full_name}", url_for('admin.approvals_list'))
 
         flash(f"Metadata edit request for '{doc.title}' submitted for approval.", 'success')
         return redirect(url_for('employee.requests_list'))
@@ -361,13 +412,23 @@ def delete_document_request(id):
         employee_id=current_user.id,
         document_id=doc.id,
         request_type='Delete',
-        proposed_values=json.dumps({'status': 'Deleted'}),
         status='Pending'
     )
     db.session.add(req)
     db.session.commit()
-
-    flash(f"Deletion request for '{doc.title}' submitted for approval.", 'success')
+    
+    create_timeline_event(
+        client_id=doc.client_id,
+        event_type='Approval Request Created',
+        description=f'Deletion requested for "{doc.title}".',
+        user_id=current_user.id,
+        document_id=doc.id
+    )
+    db.session.commit()
+    
+    notify_admins(f"Delete Document Request for '{doc.title}' by {current_user.full_name}", url_for('admin.approvals_list'))
+    
+    flash(f"Delete request for '{doc.title}' submitted.", 'success')
     return redirect(url_for('employee.requests_list'))
 
 
@@ -402,6 +463,17 @@ def password_change_request(id):
         )
         db.session.add(req)
         db.session.commit()
+        
+        create_timeline_event(
+            client_id=doc.client_id,
+            event_type='Approval Request Created',
+            description=f'Password modification requested for "{doc.title}".',
+            user_id=current_user.id,
+            document_id=doc.id
+        )
+        db.session.commit()
+        
+        notify_admins(f"Password Edit Request for '{doc.title}' by {current_user.full_name}", url_for('admin.approvals_list'))
 
         flash(f"Password modification request for '{doc.title}' submitted.", 'success')
         return redirect(url_for('employee.requests_list'))

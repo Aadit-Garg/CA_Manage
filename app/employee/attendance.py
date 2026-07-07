@@ -1,0 +1,80 @@
+from datetime import datetime, timezone
+from flask import render_template, request, jsonify, flash, redirect, url_for
+from flask_login import current_user
+from ..extensions import db
+from ..models.attendance import Attendance
+from . import employee_bp
+from .routes import employee_required
+from ..utils.logging import get_logger
+
+logger = get_logger(__name__)
+
+@employee_bp.route('/attendance/punch', methods=['POST'])
+@employee_required
+def punch():
+    """
+    Handles Punch In and Punch Out logic for employees.
+    Expects JSON payload with geolocation and device info.
+    """
+    data = request.json or {}
+    now = datetime.now(timezone.utc)
+    today = now.date()
+    
+    # Check if there is already an attendance record for today
+    record = Attendance.query.filter_by(employee_id=current_user.id, date=today).first()
+    
+    action = data.get('action') # 'in' or 'out'
+    lat = data.get('latitude')
+    lng = data.get('longitude')
+    acc = data.get('accuracy')
+    location_status = data.get('location_status', 'Unknown')
+    device_info = data.get('device_info', request.user_agent.string)
+    ip_address = request.remote_addr
+    
+    if action == 'in':
+        if record and record.punch_in_time:
+            return jsonify({'error': 'Already punched in today.'}), 400
+            
+        if not record:
+            record = Attendance(employee_id=current_user.id, date=today)
+            db.session.add(record)
+            
+        record.punch_in_time = now
+        record.status = 'Present'
+        record.latitude = lat
+        record.longitude = lng
+        record.gps_accuracy = acc
+        record.location_status = location_status
+        record.device_info = device_info
+        record.ip_address = ip_address
+        
+        db.session.commit()
+        return jsonify({'message': 'Punched in successfully.', 'time': now.strftime('%I:%M %p')}), 200
+        
+    elif action == 'out':
+        if not record or not record.punch_in_time:
+            return jsonify({'error': 'You must punch in first.'}), 400
+            
+        if record.punch_out_time:
+            return jsonify({'error': 'Already punched out today.'}), 400
+            
+        record.punch_out_time = now
+        # Calculate total hours
+        td = record.punch_out_time - record.punch_in_time
+        record.total_hours = round(td.total_seconds() / 3600.0, 2)
+        
+        db.session.commit()
+        return jsonify({'message': 'Punched out successfully.', 'time': now.strftime('%I:%M %p')}), 200
+        
+    return jsonify({'error': 'Invalid action.'}), 400
+
+
+@employee_bp.route('/attendance/history', methods=['GET'])
+@employee_required
+def attendance_history():
+    """
+    View attendance history for the logged-in employee.
+    """
+    page = request.args.get('page', 1, type=int)
+    records = Attendance.query.filter_by(employee_id=current_user.id).order_by(Attendance.date.desc()).paginate(page=page, per_page=15)
+    return render_template('employee/attendance_history.html', records=records)

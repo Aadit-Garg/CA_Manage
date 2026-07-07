@@ -165,3 +165,39 @@ function isStaticAsset(url) {
            url.hostname.includes('fonts.googleapis.com') ||
            url.hostname.includes('fonts.gstatic.com');
 }
+
+// ── Web Push Notifications ──────────────────────────────────────
+self.addEventListener('push', function(event) {
+    console.log('[Service Worker] Push Received.');
+    let data = { title: 'CA Manage', body: 'New notification', url: '/' };
+    if (event.data) {
+        try {
+            data = event.data.json();
+        } catch (e) {
+            data.body = event.data.text();
+        }
+    }
+
+    const title = data.title;
+    const options = {
+        body: data.body,
+        icon: '/static/icons/icon-192x192.png',
+        badge: '/static/icons/icon-192x192.png',
+        data: {
+            url: data.url
+        }
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', function(event) {
+    console.log('[Service Worker] Notification click Received.');
+    event.notification.close();
+    
+    if(event.notification.data && event.notification.data.url) {
+        event.waitUntil(
+            clients.openWindow(event.notification.data.url)
+        );
+    }
+});

@@ -12,5 +12,7 @@ from .approval import ApprovalRequest
 from .upload_session import UploadSession, UploadSessionFile
 from .attendance import Attendance
 from .timeline import TimelineEvent
+from .notification import Notification
+from .push_subscription import PushSubscription
 
-__all__ = ['User', 'ClientProfile', 'Employee', 'Document', 'DocumentVersion', 'ApprovalRequest', 'UploadSession', 'UploadSessionFile', 'Attendance', 'TimelineEvent']
+__all__ = ['User', 'ClientProfile', 'Employee', 'Document', 'DocumentVersion', 'ApprovalRequest', 'UploadSession', 'UploadSessionFile', 'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription']

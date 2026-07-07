@@ -11,6 +11,17 @@
     </div>
 </div>
 
+<!-- Instructions -->
+<div class="alert alert-info border-info border-opacity-25 bg-info bg-opacity-10 mb-4" role="alert">
+    <h5 class="alert-heading fw-bold"><i class="bi bi-info-circle me-2"></i>How to Bulk Upload</h5>
+    <p class="mb-2">To automatically map files to the correct clients, you must include the client's <strong>Upload ID</strong> anywhere in the PDF filename.</p>
+    <ul class="mb-0">
+        <li>The Upload ID is a unique identifier (e.g., <code>CLI-4X9M2Q</code>) found on the Client Profile page.</li>
+        <li>Example filenames: <code>CLI-4X9M2Q_Income_Tax_Return_2023.pdf</code> or <code>Invoice_CLI-4X9M2Q.pdf</code></li>
+        <li>The system will automatically detect the financial year (e.g. <code>2023-24</code>) and document type if present in the filename.</li>
+    </ul>
+</div>
+
 <div id="bulk-upload-app">
     <!-- Step 1: File Selection -->
     <div id="step-1" class="ca-card p-5 text-center">

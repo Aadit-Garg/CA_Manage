@@ -4,12 +4,14 @@ CA Manage — Authentication Routes
 Login, logout, and password change with rate limiting and security logging.
 """
 from datetime import datetime, timezone
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
+from ..models.user import User
+from ..models.push_subscription import PushSubscription
+from ..models.notification import Notification
 from ..extensions import db, limiter
 from . import auth_bp
 from .forms import LoginForm, ChangePasswordForm
-from ..models.user import User
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -105,3 +107,63 @@ def _is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+
+@auth_bp.route('/notifications/vapid-public-key', methods=['GET'])
+@login_required
+def vapid_public_key():
+    import os
+    return jsonify({'public_key': os.environ.get('VAPID_PUBLIC_KEY')})
+
+
+@auth_bp.route('/notifications/subscribe', methods=['POST'])
+@login_required
+def subscribe():
+    """Saves a PushSubscription for the current user."""
+    subscription_info = request.json
+    if not subscription_info:
+        return jsonify({'error': 'Invalid payload'}), 400
+
+    endpoint = subscription_info.get('endpoint')
+    keys = subscription_info.get('keys', {})
+    p256dh = keys.get('p256dh')
+    auth = keys.get('auth')
+
+    if not endpoint or not p256dh or not auth:
+        return jsonify({'error': 'Missing subscription details'}), 400
+
+    # Check if this endpoint already exists for this user
+    existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
+    if existing:
+        if existing.user_id != current_user.id:
+            existing.user_id = current_user.id
+            db.session.commit()
+        return jsonify({'status': 'Subscription already exists and is valid'}), 200
+
+    sub = PushSubscription(
+        user_id=current_user.id,
+        endpoint=endpoint,
+        p256dh=p256dh,
+        auth=auth
+    )
+    db.session.add(sub)
+    db.session.commit()
+    return jsonify({'status': 'Subscribed successfully'}), 201
+
+
+@auth_bp.route('/notifications/read/<int:id>', methods=['POST'])
+@login_required
+def mark_notification_read(id):
+    """Marks a single notification as read."""
+    notif = Notification.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    notif.is_read = True
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+@auth_bp.route('/notifications/read-all', methods=['POST'])
+@login_required
+def mark_all_notifications_read():
+    """Marks all notifications for user as read."""
+    Notification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify({'status': 'success'})

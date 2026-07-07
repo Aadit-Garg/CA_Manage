@@ -20,6 +20,8 @@ from ..models.upload_session import UploadSession
 from ..utils.logging import get_logger, log_user_action
 from ..utils.cloudinary_helper import upload_pdf, delete_pdf
 from ..utils.import_helper import generate_excel_template, parse_and_validate_excel
+from ..utils.timeline import create_timeline_event
+from ..utils.notification import create_notification
 from .forms import EmployeeForm, ClientForm, AdminResetPasswordForm, DocumentUploadForm, DocumentEditForm, DocumentReplaceForm, BulkUploadForm
 from . import admin_bp
 
@@ -302,6 +304,14 @@ def create_client():
         )
         db.session.add(profile)
         db.session.commit()
+        
+        create_timeline_event(
+            client_id=profile.id,
+            event_type='Client Created',
+            description=f'Client profile created by {current_user.full_name}.',
+            user_id=current_user.id
+        )
+        db.session.commit()
 
         log_user_action(logger, current_user, 'create_client', {'client_email': profile.email})
         flash(f"Client {profile.full_name} created. Default password: 'Client@123'.", 'success')
@@ -327,6 +337,14 @@ def edit_client(id):
         user.full_name = profile.full_name
         user.phone = profile.phone
         db.session.commit()
+        
+        create_timeline_event(
+            client_id=profile.id,
+            event_type='Client Updated',
+            description=f'Client profile updated by {current_user.full_name}.',
+            user_id=current_user.id
+        )
+        db.session.commit()
 
         log_user_action(logger, current_user, 'edit_client', {'client_email': profile.email})
         flash(f"Client {profile.full_name} updated successfully.", 'success')
@@ -349,6 +367,14 @@ def toggle_client_status(id):
         action = 'enable_client'
         msg = f"Client account for {profile.full_name} enabled."
     db.session.commit()
+    
+    create_timeline_event(
+        client_id=profile.id,
+        event_type='Client Disabled' if not user.is_active else 'Client Restored',
+        description=msg,
+        user_id=current_user.id
+    )
+    db.session.commit()
 
     log_user_action(logger, current_user, action, {'client_email': profile.email})
     flash(msg, 'success')
@@ -361,6 +387,14 @@ def delete_client(id):
     profile = ClientProfile.query.get_or_404(id)
     profile.status = 'Inactive'
     profile.user.is_active = False
+    db.session.commit()
+    
+    create_timeline_event(
+        client_id=profile.id,
+        event_type='Client Disabled',
+        description=f"Client account for {profile.full_name} marked as inactive.",
+        user_id=current_user.id
+    )
     db.session.commit()
 
     log_user_action(logger, current_user, 'disable_client', {'client_email': profile.email})
@@ -605,6 +639,15 @@ def upload_document():
                 
             db.session.add(doc)
             db.session.commit()
+            
+            create_timeline_event(
+                client_id=client.id,
+                event_type='Document Uploaded',
+                description=f'Document "{doc.title}" uploaded.',
+                user_id=current_user.id,
+                document_id=doc.id
+            )
+            db.session.commit()
 
             log_user_action(current_app.logger, current_user, 'create_document', {'title': doc.title})
             flash(f"Document '{doc.title}' uploaded and published successfully.", 'success')
@@ -636,6 +679,16 @@ def edit_document(id):
             doc.pdf_password = None
             
         db.session.commit()
+        
+        create_timeline_event(
+            client_id=doc.client_id,
+            event_type='Document Updated',
+            description=f'Document metadata or settings updated.',
+            user_id=current_user.id,
+            document_id=doc.id
+        )
+        db.session.commit()
+        
         log_user_action(logger, current_user, 'edit_document', {'title': doc.title})
         
         flash('Document details updated successfully.', 'success')
@@ -685,6 +738,16 @@ def replace_document(id):
             doc.upload_version += 1
             
             db.session.commit()
+            
+            create_timeline_event(
+                client_id=doc.client_id,
+                event_type='Document Replaced',
+                description=f'Document replaced with v{doc.upload_version}.',
+                user_id=current_user.id,
+                document_id=doc.id
+            )
+            db.session.commit()
+            
             log_user_action(logger, current_user, 'replace_document', {'title': doc.title})
             
             flash(f"Document replaced successfully. Now at version {doc.upload_version}.", 'success')
@@ -702,6 +765,15 @@ def delete_document(id):
     """Soft delete a document."""
     doc = Document.query.get_or_404(id)
     doc.status = 'Deleted'
+    db.session.commit()
+    
+    create_timeline_event(
+        client_id=doc.client_id,
+        event_type='Document Deleted',
+        description=f'Document "{doc.title}" deleted.',
+        user_id=current_user.id,
+        document_id=doc.id
+    )
     db.session.commit()
     
     log_user_action(logger, current_user, 'delete_document', {'title': doc.title})
@@ -848,6 +920,22 @@ def review_approval(id):
                     doc.pdf_password = None
                     
             db.session.commit()
+            
+            # Note: doc might be None if request type was Delete and doc was already deleted, but req.document should be there if relationships are setup.
+            # Using client_id from the original request or document if available.
+            client_id = doc.client_id if doc else req.employee_id # Fallback
+            if doc:
+                create_timeline_event(
+                    client_id=doc.client_id,
+                    event_type='Approval Request Approved',
+                    description=f'{req.request_type} request approved by {current_user.full_name}.',
+                    user_id=current_user.id,
+                    document_id=doc.id
+                )
+                db.session.commit()
+                
+            create_notification(req.employee_id, f"Your '{req.request_type}' request for '{doc.title if doc else 'Document'}' was Approved.", url_for('employee.requests_list'))
+                
             log_user_action(logger, current_user, f'approve_{req.request_type.lower()}', {'request_id': req.id})
             flash('Employee request approved successfully.', 'success')
             return redirect(url_for('admin.approvals_list'))
@@ -872,6 +960,19 @@ def review_approval(id):
                 delete_pdf(proposed['cloudinary_public_id'])
                 
             db.session.commit()
+            
+            if req.document:
+                create_timeline_event(
+                    client_id=req.document.client_id,
+                    event_type='Approval Request Rejected',
+                    description=f'{req.request_type} request rejected. Reason: {reason}',
+                    user_id=current_user.id,
+                    document_id=req.document.id
+                )
+                db.session.commit()
+                
+            create_notification(req.employee_id, f"Your '{req.request_type}' request was Rejected. Reason: {reason}", url_for('employee.requests_list'))
+                
             log_user_action(logger, current_user, f'reject_{req.request_type.lower()}', {'request_id': req.id, 'reason': reason})
             flash('Employee request rejected and logged.', 'info')
             return redirect(url_for('admin.approvals_list'))
