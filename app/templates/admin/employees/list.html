@@ -94,6 +94,12 @@
                                     </button>
                                     {% endif %}
                                 </form>
+                                <form method="POST" action="{{ url_for('admin.delete_employee', id=emp.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete Employee" onclick="return confirm('CRITICAL WARNING: Are you completely sure you want to permanently delete this employee? This action cannot be undone.')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
