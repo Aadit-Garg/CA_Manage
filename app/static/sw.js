@@ -5,7 +5,7 @@
  * Cache versioning via CACHE_VERSION for easy updates.
  */
 
-const CACHE_VERSION = 'ca-manage-v1';
+const CACHE_VERSION = 'ca-manage-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 
@@ -13,8 +13,8 @@ const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const STATIC_ASSETS = [
     '/static/css/app.css',
     '/static/js/app.js',
-    '/static/icons/icon-192x192.svg',
-    '/static/icons/icon-512x512.svg',
+    '/static/icons/icon-192x192.png',
+    '/static/icons/icon-512x512.png',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
@@ -181,8 +181,8 @@ self.addEventListener('push', function(event) {
     const title = data.title;
     const options = {
         body: data.body,
-        icon: '/static/icons/icon-192x192.svg',
-        badge: '/static/icons/icon-192x192.svg',
+        icon: '/static/icons/icon-192x192.png',
+        badge: '/static/icons/icon-192x192.png',
         data: {
             url: data.url
         }

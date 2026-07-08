@@ -1,5 +1,6 @@
 """
 CA Manage — WSGI Entry Point
+Named wsgi.py (not app.py) to avoid shadowing the app/ package on Vercel.
 Run with: flask run --debug
 """
 import os

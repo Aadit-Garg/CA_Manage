@@ -8,7 +8,6 @@ from ..models.approval import ApprovalRequest
 from ..models.upload_session import UploadSession, UploadSessionFile
 from ..utils.cloudinary_helper import upload_pdf
 from . import api_bp
-from ..auth.decorators import role_required
 from functools import wraps
 
 def admin_or_employee_required(f):
@@ -20,6 +19,7 @@ def admin_or_employee_required(f):
     return decorated_function
 
 @api_bp.route('/bulk-upload/analyze', methods=['POST'])
+@login_required
 @admin_or_employee_required
 def analyze_bulk_upload():
     """
@@ -115,6 +115,7 @@ def analyze_bulk_upload():
     return jsonify({'results': results})
 
 @api_bp.route('/bulk-upload/process', methods=['POST'])
+@login_required
 @admin_or_employee_required
 def process_bulk_upload():
     """
@@ -168,7 +169,7 @@ def process_bulk_upload():
                 cloudinary_url=res['cloudinary_url'],
                 original_filename=res['original_filename'],
                 file_size=res['file_size'],
-                file_hash=file_hash,
+                file_hash=res['file_hash'],
                 uploaded_by_id=current_user.id,
                 approved=False,
                 status='Pending Replace'
@@ -204,7 +205,7 @@ def process_bulk_upload():
                 cloudinary_url=res['cloudinary_url'],
                 original_filename=res['original_filename'],
                 file_size=res['file_size'],
-                file_hash=file_hash,
+                file_hash=res['file_hash'],
                 uploaded_by_id=current_user.id,
                 approved=False,
                 status='Pending'
@@ -242,7 +243,7 @@ def process_bulk_upload():
                 cloudinary_url=res['cloudinary_url'],
                 original_filename=res['original_filename'],
                 file_size=res['file_size'],
-                file_hash=file_hash,
+                file_hash=res['file_hash'],
                 uploaded_by_id=current_user.id,
                 approved_by_id=current_user.id,
                 approved=True,
@@ -268,6 +269,7 @@ def process_bulk_upload():
         return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/bulk-upload/session', methods=['POST'])
+@login_required
 @admin_or_employee_required
 def create_bulk_session():
     """Create a new tracking session before starting uploads."""
@@ -285,6 +287,7 @@ def create_bulk_session():
     return jsonify({'session_id': session.id})
 
 @api_bp.route('/bulk-upload/session/<int:id>/complete', methods=['POST'])
+@login_required
 @admin_or_employee_required
 def complete_bulk_session(id):
     """Mark session as complete and save time taken."""

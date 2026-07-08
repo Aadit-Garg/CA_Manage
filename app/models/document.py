@@ -23,7 +23,7 @@ class Document(db.Model):
     # Metadata
     original_filename = db.Column(db.String(255), nullable=False)
     file_size = db.Column(db.Integer, nullable=False) # In bytes
-    file_hash = db.Column(db.String(64), unique=True, nullable=False, index=True) # SHA-256 integrity check
+    file_hash = db.Column(db.String(64), nullable=False, index=True) # SHA-256 integrity check
     upload_version = db.Column(db.Integer, default=1, nullable=False)
     
     # Verification & Approval State

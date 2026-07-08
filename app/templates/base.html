@@ -9,7 +9,7 @@
     <!-- PWA / Favicon Metadata -->
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icons/icon-192x192.svg') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
     <meta name="theme-color" content="#1a365d">
 
     <!-- Bootstrap 5 CSS (Loaded Locally) -->
@@ -75,5 +75,6 @@
     <div id="sidebar-overlay" class="ca-overlay" onclick="document.querySelector('.ca-sidebar').classList.remove('show'); this.classList.remove('show');"></div>
     
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

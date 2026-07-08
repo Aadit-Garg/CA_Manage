@@ -23,7 +23,11 @@ def create_app(config_name=None):
 
     # ── Load configuration ──────────────────────────────────────────
     if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'development')
+        # Auto-detect Vercel serverless environment
+        if os.environ.get('VERCEL') == '1':
+            config_name = 'production'
+        else:
+            config_name = os.getenv('FLASK_ENV', 'development')
     config_class = config_map.get(config_name, config_map['default'])
     app.config.from_object(config_class)
 
