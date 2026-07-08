@@ -22,6 +22,10 @@
     
     <!-- Turbo for instant page transitions and loading bar -->
     <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@7.3.0/dist/turbo.es2017-umd.js" defer></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript" defer></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/cloudinary_upload.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     <style>
         /* Hide default turbo progress bar in favor of our custom skeleton loader */
         .turbo-progress-bar {
@@ -85,10 +89,5 @@
     
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" class="ca-overlay" onclick="document.querySelector('.ca-sidebar').classList.remove('show'); this.classList.remove('show');"></div>
-    
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/cloudinary_upload.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

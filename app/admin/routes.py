@@ -236,7 +236,11 @@ def create_employee():
             role=User.ROLE_EMPLOYEE,
             is_active=True
         )
-        user.set_password('Employee@123')
+        
+        # Use provided password or default
+        password = form.password.data if form.password.data else 'Employee@123'
+        user.set_password(password)
+        
         db.session.add(user)
         db.session.flush()
 
@@ -273,6 +277,10 @@ def edit_employee(id):
         user.email = employee.email
         user.full_name = employee.full_name
         user.phone = employee.phone
+        
+        if form.password.data:
+            user.set_password(form.password.data)
+            
         db.session.commit()
 
         log_user_action(logger, current_user, 'edit_employee', module='employees', entity_type='Employee', entity_id=employee.id, description=f'Edited employee {employee.email}')
