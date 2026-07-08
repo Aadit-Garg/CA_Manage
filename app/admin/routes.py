@@ -436,7 +436,8 @@ def create_client():
             pincode=form.pincode.data.strip() if form.pincode.data else None,
             notes=form.notes.data.strip() if form.notes.data else None,
             assigned_employee_id=form.assigned_employee_id.data if form.assigned_employee_id.data > 0 else None,
-            status='Active'
+            status='Active',
+            expiration_date=form.expiration_date.data if form.expiration_date.data else (datetime.now(timezone.utc).date() + timedelta(days=30))
         )
         db.session.add(profile)
         db.session.commit()

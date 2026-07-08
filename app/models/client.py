@@ -31,6 +31,7 @@ class ClientProfile(db.Model):
     assigned_employee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     notes = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='Active', nullable=False) # Active / Inactive
+    expiration_date = db.Column(db.Date, nullable=True)
 
     # Business details (for backwards compatibility/extra context if needed)
     firm_name = db.Column(db.String(200), nullable=True)

@@ -36,14 +36,23 @@ def login():
                 log_user_action(current_app.logger, user, 'failed_login', module='auth', description='Account deactivated')
                 return render_template('auth/login.html', form=form)
 
+            if user.role == User.ROLE_CLIENT and user.client_profile and user.client_profile.expiration_date:
+                if user.client_profile.expiration_date < datetime.now(timezone.utc).date():
+                    flash('Your account login has expired. Please contact the administrator.', 'danger')
+                    current_app.logger.warning(f'Login attempt for expired account: {user.email}')
+                    log_user_action(current_app.logger, user, 'failed_login', module='auth', description='Account expired')
+                    return render_template('auth/login.html', form=form)
+
             # Successful login
             login_user(user, remember=form.remember_me.data)
             user.last_login = datetime.now(timezone.utc)
             user.failed_login_attempts = 0  # Reset attempts on success
             db.session.commit()
             
+            from flask import session
             # Warn user if they are using a default password
-            if form.password.data in ['Admin@123', 'Employee@123', 'Client@123']:
+            if form.password.data in ['Admin@123', 'Employee@123', 'Client@123', 'admin@camanage.com']:
+                session['requires_password_change'] = True
                 flash('Account at risk: You are using a default password. Please change it immediately.', 'danger')
 
             current_app.logger.info(f'User logged in: {user.email} [{user.role}]')
@@ -91,6 +100,8 @@ def change_password():
 
         current_user.set_password(form.new_password.data)
         db.session.commit()
+        from flask import session
+        session.pop('requires_password_change', None)
         current_app.logger.info(f'Password changed for user: {current_user.email}')
         log_user_action(current_app.logger, current_user, 'password_change', module='auth')
         flash('Password updated successfully.', 'success')

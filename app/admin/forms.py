@@ -118,6 +118,10 @@ class ClientForm(FlaskForm):
         ('business', 'Business')
     ], render_kw={'class': 'form-select'})
 
+    expiration_date = DateField('Expiration Date (Optional)', format='%Y-%m-%d', validators=[
+        Optional()
+    ], render_kw={'class': 'form-control'})
+
     PAN = StringField('PAN (Optional)', validators=[
         Optional(),
         Regexp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$', message='Invalid PAN. e.g. ABCDE1234F')

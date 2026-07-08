@@ -73,6 +73,20 @@
                         </div>
 
                         <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small">{{ form.expiration_date.label.text }}</label>
+                            <div class="input-group input-group-sm">
+                                {{ form.expiration_date }}
+                                <button class="btn btn-outline-secondary px-2" type="button" onclick="extendExpiration(1)">+1d</button>
+                                <button class="btn btn-outline-secondary px-2" type="button" onclick="extendExpiration(7)">+7d</button>
+                                <button class="btn btn-outline-secondary px-2" type="button" onclick="extendExpiration(30)">+30d</button>
+                            </div>
+                            <div class="form-text small text-muted">Defaults to 30 days if left blank.</div>
+                            {% for error in form.expiration_date.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold text-dark small">{{ form.PAN.label.text }}</label>
                             {{ form.PAN }}
                             {% for error in form.PAN.errors %}
@@ -150,4 +164,26 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function extendExpiration(days) {
+    const dateInput = document.getElementById('expiration_date');
+    let date;
+    if (dateInput.value) {
+        date = new Date(dateInput.value);
+    } else {
+        date = new Date();
+    }
+    date.setDate(date.getDate() + days);
+    
+    // Format to YYYY-MM-DD
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+}
+</script>
 {% endblock %}

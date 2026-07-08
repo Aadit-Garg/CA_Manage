@@ -84,6 +84,16 @@ def create_app(config_name=None):
                 return redirect(url_for('client_portal.dashboard'))
         return redirect(url_for('auth.login'))
 
+    @app.before_request
+    def check_password_change_required():
+        from flask import request, session, flash, redirect, url_for
+        if current_user.is_authenticated and session.get('requires_password_change'):
+            # Allow access to static files, auth endpoints, and the password change route
+            if request.endpoint and not request.endpoint.startswith('static') \
+               and request.endpoint not in ['auth.change_password', 'auth.logout']:
+                flash('You must change your default password before continuing.', 'warning')
+                return redirect(url_for('auth.change_password'))
+
     # ── PWA routes (serve at root path) ─────────────────────────────
     @app.route('/manifest.json')
     def serve_manifest():
