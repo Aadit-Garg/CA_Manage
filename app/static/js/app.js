@@ -126,27 +126,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Show skeleton loader on Turbo requests
-        document.addEventListener('turbo:before-visit', () => {
-            const skeleton = document.getElementById('page-skeleton');
-            const mainContent = document.getElementById('main-content-container');
-            if (skeleton && mainContent) {
-                skeleton.classList.remove('d-none');
-                mainContent.style.opacity = '0.5';
-            }
-        });
+    }
+});
 
-        document.addEventListener('turbo:load', () => {
-            const skeleton = document.getElementById('page-skeleton');
-            const mainContent = document.getElementById('main-content-container');
-            if (skeleton && mainContent) {
-                // Use a tiny timeout to ensure DOM rendering completes smoothly
-                setTimeout(() => {
-                    skeleton.classList.add('d-none');
-                    mainContent.style.opacity = '1';
-                }, 50);
-            }
-        });
+// ═══════════════════════════════════════════════════════════════════
+// Turbo Configuration & Skeleton Loader
+// ═══════════════════════════════════════════════════════════════════
+// Show skeleton loader on Turbo requests
+document.addEventListener('turbo:click', (event) => {
+    // Only show skeleton for sidebar/navigation links, not buttons
+    const link = event.target.closest('a');
+    if (link && !link.classList.contains('btn')) {
+        const skeleton = document.getElementById('page-skeleton');
+        const mainContent = document.getElementById('main-content-container');
+        if (skeleton && mainContent) {
+            skeleton.classList.remove('d-none');
+            mainContent.style.opacity = '0.5';
+        }
+    }
+});
+
+document.addEventListener('turbo:load', () => {
+    const skeleton = document.getElementById('page-skeleton');
+    const mainContent = document.getElementById('main-content-container');
+    if (skeleton && mainContent) {
+        // Use a tiny timeout to ensure DOM rendering completes smoothly
+        setTimeout(() => {
+            skeleton.classList.add('d-none');
+            mainContent.style.opacity = '1';
+        }, 50);
     }
 });
 
@@ -438,3 +446,47 @@ async function triggerPWAInstall() {
     // Clear the deferred prompt variable
     deferredPrompt = null;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Button Loading State Feedback
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('turbo:submit-start', (event) => {
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitBtn) {
+        // Store original text
+        if (!submitBtn.dataset.originalHtml) {
+            submitBtn.dataset.originalHtml = submitBtn.innerHTML;
+        }
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+    }
+});
+
+document.addEventListener('turbo:submit-end', (event) => {
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitBtn && submitBtn.dataset.originalHtml) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = submitBtn.dataset.originalHtml;
+    }
+});
+
+document.addEventListener('turbo:click', (event) => {
+    const link = event.target.closest('a');
+    if (link && link.classList.contains('btn')) {
+        if (!link.dataset.originalHtml) {
+            link.dataset.originalHtml = link.innerHTML;
+        }
+        link.classList.add('disabled');
+        link.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        
+        // Restore after visit completes
+        const restoreButton = () => {
+            link.classList.remove('disabled');
+            link.innerHTML = link.dataset.originalHtml;
+            document.removeEventListener('turbo:load', restoreButton);
+        };
+        document.addEventListener('turbo:load', restoreButton);
+    }
+});

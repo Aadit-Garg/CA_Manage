@@ -22,6 +22,7 @@ def generate_signature():
     params_to_sign = {
         'timestamp': timestamp,
         'folder': 'ca_manage_docs',
+        'source': 'uw'
     }
 
     # Generate the signature using the API secret

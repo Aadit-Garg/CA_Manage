@@ -90,7 +90,10 @@ function markAllRead(event) {
 }
 
 // Web Push Logic
-const urlBase64ToUint8Array = base64String => {
+window.urlBase64ToUint8Array = function(base64String) {
+    if (!base64String) {
+        throw new Error("VAPID Public Key is null or undefined. Please check Vercel Environment Variables.");
+    }
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
     const rawData = atob(base64);
@@ -133,7 +136,7 @@ async function subscribeToPush() {
 
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            applicationServerKey: window.urlBase64ToUint8Array(vapidPublicKey)
         });
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
