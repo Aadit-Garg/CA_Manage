@@ -12,6 +12,12 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
     <meta name="theme-color" content="#1a365d">
 
+    <!-- Open Graph / Social Media Metadata (WhatsApp, LinkedIn, iMessage) -->
+    <meta property="og:title" content="Sumit N Garg Associates">
+    <meta property="og:description" content="Secure document portal and practice management for Chartered Accountants">
+    <meta property="og:image" content="{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='images/logo.png') }}">
+    <meta property="og:url" content="{{ request.url_root }}">
+    <meta property="og:type" content="website">
     <!-- Bootstrap 5 CSS (Loaded Locally) -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     

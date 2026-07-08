@@ -1,6 +1,6 @@
 {
-    "name": "CA Manage — Document Portal",
-    "short_name": "CA Manage",
+    "name": "Sumit N Garg Associates",
+    "short_name": "SNG Associates",
     "description": "Secure document portal and practice management for Chartered Accountants",
     "start_url": "/",
     "scope": "/",
@@ -12,14 +12,8 @@
     "categories": ["business", "finance", "productivity"],
     "icons": [
         {
-            "src": "/static/icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/static/icons/icon-512x512.png",
-            "sizes": "512x512",
+            "src": "/static/images/logo.png",
+            "sizes": "192x192 512x512",
             "type": "image/png",
             "purpose": "any maskable"
         }
