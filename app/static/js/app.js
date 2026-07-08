@@ -79,11 +79,15 @@ function showToast(message, type = 'info') {
 // ═══════════════════════════════════════════════════════════════════
 // Auto-initialize Bootstrap toasts on page load
 // ═══════════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+const initUI = () => {
     // Initialize any server-rendered toasts
-    document.querySelectorAll('.toast.show').forEach((toastEl) => {
-        const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
-        toast.show();
+    document.querySelectorAll('.ca-toast').forEach((toastEl) => {
+        // Prevent double initialization
+        if (!toastEl.classList.contains('toast-initialized')) {
+            const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+            toast.show();
+            toastEl.classList.add('toast-initialized');
+        }
     });
 
     // Close offcanvas sidebar on nav link click (mobile)
@@ -99,7 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-});
+};
+
+document.addEventListener('DOMContentLoaded', initUI);
+document.addEventListener('turbo:load', initUI);
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -146,7 +153,7 @@ window.addEventListener('resize', setViewportHeight);
 // ═══════════════════════════════════════════════════════════════════
 // Bottom nav active state
 // ═══════════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+const initNav = () => {
     const currentPath = window.location.pathname;
     document.querySelectorAll('.ca-bottom-nav-item').forEach((item) => {
         const href = item.getAttribute('href');
@@ -154,7 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
             item.classList.add('active');
         }
     });
-});
+};
+document.addEventListener('DOMContentLoaded', initNav);
+document.addEventListener('turbo:load', initNav);
 
 // ═══════════════════════════════════════════════════════════════════
 // Force PWA push notification prompt on page load

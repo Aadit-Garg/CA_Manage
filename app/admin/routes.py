@@ -95,6 +95,81 @@ def create_system_admin():
     return render_template('admin/system_admins/new.html', form=form)
 
 
+@admin_bp.route('/system-admins/<int:id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_system_admin(id):
+    """Edit existing system administrator profile."""
+    admin = User.query.get_or_404(id)
+    if admin.role != User.ROLE_ADMIN:
+        flash("Invalid user role.", "danger")
+        return redirect(url_for('admin.system_admins_list'))
+        
+    from .forms import SystemAdminForm
+    form = SystemAdminForm(original_user_id=admin.id, obj=admin)
+
+    if form.validate_on_submit():
+        form.populate_obj(admin)
+        admin.email = form.email.data.lower().strip()
+        db.session.commit()
+
+        log_user_action(logger, current_user, 'edit_admin', module='admin', entity_id=admin.id, description=f'Edited admin {admin.email}')
+        flash(f"System Administrator {admin.full_name} updated successfully.", 'success')
+        return redirect(url_for('admin.system_admins_list'))
+
+    return render_template('admin/system_admins/edit.html', form=form, admin=admin)
+
+
+@admin_bp.route('/system-admins/<int:id>/toggle-status', methods=['POST'])
+@admin_required
+def toggle_system_admin_status(id):
+    """Enable or disable a system administrator login."""
+    admin = User.query.get_or_404(id)
+    if admin.role != User.ROLE_ADMIN:
+        flash("Invalid user role.", "danger")
+        return redirect(url_for('admin.system_admins_list'))
+        
+    if admin.id == current_user.id:
+        flash("You cannot disable your own account.", "danger")
+        return redirect(url_for('admin.system_admins_list'))
+
+    if admin.is_active:
+        admin.is_active = False
+        action = 'disable_admin'
+        msg = f"System Administrator {admin.full_name} has been disabled."
+    else:
+        admin.is_active = True
+        action = 'enable_admin'
+        msg = f"System Administrator {admin.full_name} has been enabled."
+    db.session.commit()
+
+    log_user_action(logger, current_user, action, module='admin', entity_id=admin.id, description=f'{action} on admin {admin.email}')
+    flash(msg, 'success')
+    return redirect(url_for('admin.system_admins_list'))
+
+
+@admin_bp.route('/system-admins/<int:id>/reset-password', methods=['GET', 'POST'])
+@admin_required
+def reset_system_admin_password(id):
+    """Reset password of a system administrator."""
+    admin = User.query.get_or_404(id)
+    if admin.role != User.ROLE_ADMIN:
+        flash("Invalid user role.", "danger")
+        return redirect(url_for('admin.system_admins_list'))
+        
+    from .forms import AdminResetPasswordForm
+    form = AdminResetPasswordForm()
+    
+    if form.validate_on_submit():
+        admin.set_password(form.password.data)
+        db.session.commit()
+        
+        log_user_action(logger, current_user, 'reset_password_admin', module='admin', entity_id=admin.id, description=f'Password reset for admin {admin.email}')
+        flash(f"Password reset successfully for {admin.full_name}.", 'success')
+        return redirect(url_for('admin.system_admins_list'))
+        
+    return render_template('admin/system_admins/reset_password.html', form=form, admin=admin)
+
+
 # ── Employee Management ──────────────────────────────────────────────
 @admin_bp.route('/employees')
 @admin_required

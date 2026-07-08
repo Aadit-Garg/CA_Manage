@@ -38,7 +38,30 @@
                         {% endif %}
                     </td>
                     <td class="pe-4 text-end">
-                        <span class="text-muted small">No actions</span>
+                        {% if admin.id != current_user.id %}
+                        <div class="d-inline-flex gap-1">
+                            <a href="{{ url_for('admin.edit_system_admin', id=admin.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{{ url_for('admin.reset_system_admin_password', id=admin.id) }}" class="btn btn-sm btn-outline-warning py-1 px-2" title="Reset Password">
+                                <i class="bi bi-key"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('admin.toggle_system_admin_status', id=admin.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                {% if admin.is_active %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Disable" onclick="return confirm('Are you sure you want to disable this admin account?')">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Enable">
+                                    <i class="bi bi-person-check"></i>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">Current User</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
