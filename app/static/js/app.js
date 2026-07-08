@@ -132,26 +132,42 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════════
 // Turbo Configuration & Skeleton Loader
 // ═══════════════════════════════════════════════════════════════════
-// Show global loader overlay on Turbo requests
+// Show skeleton loader on Turbo navigation clicks
 document.addEventListener('turbo:click', (event) => {
-    // Show loader for standard navigation links
+    // Show skeleton for standard navigation links
     const link = event.target.closest('a');
     if (link && !link.classList.contains('btn')) {
-        const loader = document.getElementById('global-loader');
-        if (loader) loader.classList.remove('d-none');
+        const skeleton = document.getElementById('page-skeleton');
+        const mainContent = document.getElementById('main-content-container');
+        if (skeleton && mainContent) {
+            skeleton.classList.remove('d-none');
+            mainContent.style.opacity = '0.5';
+        }
     }
 });
 
+// Show global loader overlay on form submissions
 document.addEventListener('turbo:submit-start', () => {
     const loader = document.getElementById('global-loader');
     if (loader) loader.classList.remove('d-none');
 });
 
 document.addEventListener('turbo:load', () => {
+    // Hide global loader if active
     const loader = document.getElementById('global-loader');
     if (loader) {
         setTimeout(() => {
             loader.classList.add('d-none');
+        }, 50);
+    }
+    
+    // Hide skeleton loader if active
+    const skeleton = document.getElementById('page-skeleton');
+    const mainContent = document.getElementById('main-content-container');
+    if (skeleton && mainContent) {
+        setTimeout(() => {
+            skeleton.classList.add('d-none');
+            mainContent.style.opacity = '1';
         }, 50);
     }
 });

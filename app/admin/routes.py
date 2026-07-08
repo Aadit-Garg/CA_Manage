@@ -92,7 +92,8 @@ def create_system_admin():
         flash(f"System Administrator {user.full_name} created. Default password: 'Admin@123'.", 'success')
         return redirect(url_for('admin.system_admins_list'))
 
-    return render_template('admin/system_admins/new.html', form=form)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/system_admins/new.html', form=form), status_code
 
 
 @admin_bp.route('/system-admins/<int:id>/edit', methods=['GET', 'POST'])
@@ -116,7 +117,8 @@ def edit_system_admin(id):
         flash(f"System Administrator {admin.full_name} updated successfully.", 'success')
         return redirect(url_for('admin.system_admins_list'))
 
-    return render_template('admin/system_admins/edit.html', form=form, admin=admin)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/system_admins/edit.html', form=form, admin=admin), status_code
 
 
 @admin_bp.route('/system-admins/<int:id>/toggle-status', methods=['POST'])
@@ -167,7 +169,8 @@ def reset_system_admin_password(id):
         flash(f"Password reset successfully for {admin.full_name}.", 'success')
         return redirect(url_for('admin.system_admins_list'))
         
-    return render_template('admin/system_admins/reset_password.html', form=form, admin=admin)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/system_admins/reset_password.html', form=form, admin=admin), status_code
 
 
 @admin_bp.route('/system-admins/<int:id>/delete', methods=['POST'])
@@ -261,7 +264,8 @@ def create_employee():
         flash(f"Employee {employee.full_name} created. Default password: 'Employee@123'.", 'success')
         return redirect(url_for('admin.employees_list'))
 
-    return render_template('admin/employees/new.html', form=form)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/employees/new.html', form=form), status_code
 
 
 @admin_bp.route('/employees/<int:id>/edit', methods=['GET', 'POST'])
@@ -287,7 +291,8 @@ def edit_employee(id):
         flash(f"Employee {employee.full_name} updated successfully.", 'success')
         return redirect(url_for('admin.employees_list'))
 
-    return render_template('admin/employees/edit.html', form=form, employee=employee)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/employees/edit.html', form=form, employee=employee), status_code
 
 
 @admin_bp.route('/employees/<int:id>/toggle-status', methods=['POST'])
@@ -327,7 +332,8 @@ def reset_employee_password(id):
         flash(f"Password reset successful for {employee.full_name}.", 'success')
         return redirect(url_for('admin.employees_list'))
 
-    return render_template('admin/employees/reset_password.html', form=form, employee=employee)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/employees/reset_password.html', form=form, employee=employee), status_code
 
 
 @admin_bp.route('/employees/<int:id>/delete', methods=['POST'])
@@ -445,7 +451,8 @@ def create_client():
         flash(f"Client {profile.full_name} created. {pwd_msg}", 'success')
         return redirect(url_for('admin.clients_list'))
 
-    return render_template('admin/clients/new.html', form=form)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/clients/new.html', form=form), status_code
 
 
 @admin_bp.route('/clients/<int:id>/edit', methods=['GET', 'POST'])
@@ -482,7 +489,8 @@ def edit_client(id):
         flash(f"Client {profile.full_name} updated successfully.", 'success')
         return redirect(url_for('admin.clients_list'))
 
-    return render_template('admin/clients/edit.html', form=form, client=profile)
+    status_code = 422 if request.method == 'POST' else 200
+    return render_template('admin/clients/edit.html', form=form, client=profile), status_code
 
 
 @admin_bp.route('/clients/<int:id>/toggle-status', methods=['POST'])

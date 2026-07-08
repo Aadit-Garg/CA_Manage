@@ -67,6 +67,17 @@
 
             <!-- Scrollable Main Content -->
             <main class="ca-main">
+                <!-- Skeleton Loader Overlay -->
+                <div id="page-skeleton" class="d-none w-100 h-100 position-absolute bg-light" style="z-index: 1040; top: 0; left: 0; padding: 1.5rem;">
+                    <div class="row g-4">
+                        <div class="col-12"><div class="placeholder-glow"><span class="placeholder col-4 rounded" style="height: 2rem;"></span></div></div>
+                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
+                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
+                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
+                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
+                        <div class="col-12 mt-5"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 300px;"></span></div></div>
+                    </div>
+                </div>
 
                 <div class="container-fluid p-0">
                     {% if requires_desktop %}

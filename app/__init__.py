@@ -20,6 +20,10 @@ def create_app(config_name=None):
                      Defaults to FLASK_ENV environment variable or 'development'.
     """
     app = Flask(__name__)
+    
+    # Apply ProxyFix so Flask knows it is behind an HTTPS reverse proxy (Vercel)
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # ── Load configuration ──────────────────────────────────────────
     if config_name is None:
