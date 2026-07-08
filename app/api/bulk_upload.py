@@ -119,22 +119,27 @@ def analyze_bulk_upload():
 @admin_or_employee_required
 def process_bulk_upload():
     """
-    Processes a single file upload from the bulk uploader.
+    Processes a single file upload metadata from the bulk uploader after direct Cloudinary upload.
     Creates Document or Approval Request.
     """
-    file = request.files.get('file')
-    if not file:
-        return jsonify({'error': 'No file provided'}), 400
-        
     client_id = request.form.get('client_id', type=int)
     doc_type = request.form.get('doc_type', 'Other')
     fy = request.form.get('fy', '2025-26')
     duplicate_action = request.form.get('duplicate_action')
-    file_hash = request.form.get('hash')
+    file_hash = request.form.get('hash') # Optional now
     session_id = request.form.get('session_id', type=int)
+    
+    # Cloudinary fields
+    cloudinary_url = request.form.get('cloudinary_url')
+    cloudinary_public_id = request.form.get('cloudinary_public_id')
+    original_filename = request.form.get('original_filename')
+    file_size = request.form.get('file_size', type=int, default=0)
     
     if not client_id:
         return jsonify({'error': 'Client ID missing'}), 400
+        
+    if not cloudinary_url or not cloudinary_public_id:
+        return jsonify({'error': 'Cloudinary data missing'}), 400
         
     client = ClientProfile.query.get(client_id)
     if not client:
@@ -142,34 +147,31 @@ def process_bulk_upload():
         
     upload_session = UploadSession.query.get(session_id) if session_id else None
 
-    # Check duplicate action
+    # Check duplicate action based on cloudinary_public_id or original_filename
     existing_doc = None
-    if file_hash:
-        existing_doc = Document.query.filter_by(client_id=client_id, file_hash=file_hash, status='Active').first()
-    if not existing_doc:
-        existing_doc = Document.query.filter_by(client_id=client_id, original_filename=file.filename, status='Active').first()
+    if cloudinary_public_id:
+        existing_doc = Document.query.filter_by(client_id=client_id, cloudinary_public_id=cloudinary_public_id, status='Active').first()
+    if not existing_doc and original_filename:
+        existing_doc = Document.query.filter_by(client_id=client_id, original_filename=original_filename, status='Active').first()
         
     if existing_doc and duplicate_action == 'skip':
         return jsonify({'status': 'skipped', 'message': 'Skipped duplicate'})
 
     try:
-        # Upload to Cloudinary
-        res = upload_pdf(file)
-        
         is_admin = current_user.role == 'admin'
         
         if not is_admin and existing_doc and duplicate_action == 'replace':
             # Employee replacing creates approval request
             doc = Document(
                 client_id=client_id,
-                title=file.filename.replace('.pdf', ''),
+                title=original_filename.replace('.pdf', '') if original_filename else 'Document',
                 document_type=doc_type,
                 financial_year=fy,
-                cloudinary_public_id=res['cloudinary_public_id'],
-                cloudinary_url=res['cloudinary_url'],
-                original_filename=res['original_filename'],
-                file_size=res['file_size'],
-                file_hash=res['file_hash'],
+                cloudinary_public_id=cloudinary_public_id,
+                cloudinary_url=cloudinary_url,
+                original_filename=original_filename,
+                file_size=file_size,
+                file_hash=None,
                 uploaded_by_id=current_user.id,
                 approved=False,
                 status='Pending Replace'
@@ -188,7 +190,7 @@ def process_bulk_upload():
             
             if upload_session:
                 upload_session.approval_requests_created += 1
-                sf = UploadSessionFile(session_id=upload_session.id, filename=file.filename, status='Pending Approval', client_id=client.id, approval_request_id=req.id)
+                sf = UploadSessionFile(session_id=upload_session.id, filename=original_filename, status='Pending Approval', client_id=client.id, approval_request_id=req.id)
                 db.session.add(sf)
                 db.session.commit()
                 
@@ -198,14 +200,14 @@ def process_bulk_upload():
             # Employee upload new creates approval request
             doc = Document(
                 client_id=client_id,
-                title=file.filename.replace('.pdf', ''),
+                title=original_filename.replace('.pdf', '') if original_filename else 'Document',
                 document_type=doc_type,
                 financial_year=fy,
-                cloudinary_public_id=res['cloudinary_public_id'],
-                cloudinary_url=res['cloudinary_url'],
-                original_filename=res['original_filename'],
-                file_size=res['file_size'],
-                file_hash=res['file_hash'],
+                cloudinary_public_id=cloudinary_public_id,
+                cloudinary_url=cloudinary_url,
+                original_filename=original_filename,
+                file_size=file_size,
+                file_hash=None,
                 uploaded_by_id=current_user.id,
                 approved=False,
                 status='Pending'
@@ -223,47 +225,78 @@ def process_bulk_upload():
             
             if upload_session:
                 upload_session.approval_requests_created += 1
-                sf = UploadSessionFile(session_id=upload_session.id, filename=file.filename, status='Pending Approval', client_id=client.id, approval_request_id=req.id)
+                sf = UploadSessionFile(session_id=upload_session.id, filename=original_filename, status='Pending Approval', client_id=client.id, approval_request_id=req.id)
                 db.session.add(sf)
                 db.session.commit()
                 
             return jsonify({'status': 'pending_approval', 'message': 'Upload requires approval'})
             
         else:
-            # Admin upload or replace
+            # Admin upload/replace directly active
             if existing_doc and duplicate_action == 'replace':
-                existing_doc.status = 'Archived'
+                # Archive existing
+                history = DocumentVersion(
+                    document_id=existing_doc.id,
+                    version_number=existing_doc.upload_version,
+                    cloudinary_public_id=existing_doc.cloudinary_public_id,
+                    cloudinary_url=existing_doc.cloudinary_url,
+                    original_filename=existing_doc.original_filename,
+                    file_size=existing_doc.file_size,
+                    file_hash=existing_doc.file_hash,
+                    uploaded_by_id=existing_doc.uploaded_by_id
+                )
+                db.session.add(history)
                 
-            doc = Document(
-                client_id=client_id,
-                title=file.filename.replace('.pdf', ''),
-                document_type=doc_type,
-                financial_year=fy,
-                cloudinary_public_id=res['cloudinary_public_id'],
-                cloudinary_url=res['cloudinary_url'],
-                original_filename=res['original_filename'],
-                file_size=res['file_size'],
-                file_hash=res['file_hash'],
-                uploaded_by_id=current_user.id,
-                approved_by_id=current_user.id,
-                approved=True,
-                status='Active'
-            )
-            db.session.add(doc)
-            db.session.commit()
-            
-            if upload_session:
-                upload_session.successful_uploads += 1
-                sf = UploadSessionFile(session_id=upload_session.id, filename=file.filename, status='Success', client_id=client.id, document_id=doc.id)
-                db.session.add(sf)
+                existing_doc.cloudinary_public_id = cloudinary_public_id
+                existing_doc.cloudinary_url = cloudinary_url
+                existing_doc.original_filename = original_filename
+                existing_doc.file_size = file_size
+                existing_doc.file_hash = None
+                existing_doc.uploaded_by_id = current_user.id
+                existing_doc.upload_version += 1
                 db.session.commit()
                 
-            return jsonify({'status': 'success', 'message': 'Uploaded successfully'})
+                if upload_session:
+                    upload_session.documents_replaced += 1
+                    sf = UploadSessionFile(session_id=upload_session.id, filename=original_filename, status='Replaced', client_id=client.id, document_id=existing_doc.id)
+                    db.session.add(sf)
+                    db.session.commit()
+                    
+                return jsonify({'status': 'replaced', 'message': 'Replaced successfully', 'document_id': existing_doc.id})
+                
+            else:
+                # New direct admin upload
+                doc = Document(
+                    client_id=client_id,
+                    title=original_filename.replace('.pdf', '') if original_filename else 'Document',
+                    document_type=doc_type,
+                    financial_year=fy,
+                    cloudinary_public_id=cloudinary_public_id,
+                    cloudinary_url=cloudinary_url,
+                    original_filename=original_filename,
+                    file_size=file_size,
+                    file_hash=None,
+                    upload_version=1,
+                    uploaded_by_id=current_user.id,
+                    approved_by_id=current_user.id,
+                    approved=True,
+                    status='Active'
+                )
+                db.session.add(doc)
+                db.session.commit()
+                
+                if upload_session:
+                    upload_session.documents_uploaded += 1
+                    sf = UploadSessionFile(session_id=upload_session.id, filename=original_filename, status='Uploaded', client_id=client.id, document_id=doc.id)
+                    db.session.add(sf)
+                    db.session.commit()
+                    
+                return jsonify({'status': 'uploaded', 'message': 'Uploaded successfully', 'document_id': doc.id})
 
     except Exception as e:
         if upload_session:
             upload_session.failed_uploads += 1
-            sf = UploadSessionFile(session_id=upload_session.id, filename=file.filename, status='Failed', error_message=str(e), client_id=client_id)
+            sf = UploadSessionFile(session_id=upload_session.id, filename=original_filename, status='Failed', error_message=str(e), client_id=client_id)
             db.session.add(sf)
             db.session.commit()
         return jsonify({'error': str(e)}), 500

@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Edit Attendance — CA Manage{% endblock %}
+{% block title %}Edit Attendance — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="fw-bold mb-0">Edit Attendance Record</h3>
         <p class="text-muted small mb-0">
-            {% if employee %}{{ employee.user.full_name }}{% endif %} — {{ record.date.strftime('%A, %B %d, %Y') }}
+            {% if employee %}{{ employee.user.full_name }}{% endif %} — {{ record.date|ist('%A, %B %d, %Y') }}
         </p>
     </div>
-    <a href="{{ url_for('admin.attendance_dashboard', date=record.date.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ url_for('admin.attendance_dashboard', date=record.date|ist('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Back
     </a>
 </div>
@@ -21,12 +21,12 @@
                 <div class="col-md-6">
                     <label class="form-label fw-medium">Punch In Time</label>
                     <input type="datetime-local" name="punch_in_time" class="form-control"
-                           value="{{ record.punch_in_time.strftime('%Y-%m-%dT%H:%M') if record.punch_in_time else '' }}">
+                           value="{{ record.punch_in_time|ist('%Y-%m-%dT%H:%M') if record.punch_in_time else '' }}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-medium">Punch Out Time</label>
                     <input type="datetime-local" name="punch_out_time" class="form-control"
-                           value="{{ record.punch_out_time.strftime('%Y-%m-%dT%H:%M') if record.punch_out_time else '' }}">
+                           value="{{ record.punch_out_time|ist('%Y-%m-%dT%H:%M') if record.punch_out_time else '' }}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-medium">Status</label>
@@ -68,7 +68,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-circle me-1"></i>Save Correction
                 </button>
-                <a href="{{ url_for('admin.attendance_dashboard', date=record.date.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ url_for('admin.attendance_dashboard', date=record.date|ist('%Y-%m-%d')) }}" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
     </div>

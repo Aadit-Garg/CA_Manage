@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Client Profile — CA Manage{% endblock %}
+{% block title %}Client Profile — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -147,7 +147,7 @@
                                             </a>
                                             <small class="text-muted">{{ doc.document_type }} &bull; {{ doc.financial_year }}</small>
                                         </div>
-                                        <small class="text-muted text-nowrap">{{ doc.created_at.strftime('%b %d, %Y') }}</small>
+                                        <small class="text-muted text-nowrap">{{ doc.created_at|ist('%b %d, %Y') }}</small>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -178,8 +178,8 @@
                             <div>
                                 <small class="text-muted d-block uppercase mb-1">Last Login</small>
                                 {% if client.user.last_login %}
-                                    <span class="fw-bold text-dark">{{ client.user.last_login.strftime('%B %d, %Y') }}</span>
-                                    <div class="small text-muted mt-1">{{ client.user.last_login.strftime('%I:%M %p') }}</div>
+                                    <span class="fw-bold text-dark">{{ client.user.last_login|ist('%B %d, %Y') }}</span>
+                                    <div class="small text-muted mt-1">{{ client.user.last_login|ist('%I:%M %p') }}</div>
                                 {% else %}
                                     <span class="text-muted">Never logged in</span>
                                 {% endif %}
@@ -192,7 +192,7 @@
                             </div>
                             <div>
                                 <small class="text-muted d-block uppercase mb-1">Account Created</small>
-                                <span class="fw-bold text-dark">{{ client.created_at.strftime('%B %d, %Y') }}</span>
+                                <span class="fw-bold text-dark">{{ client.created_at|ist('%B %d, %Y') }}</span>
                             </div>
                         </div>
                     </div>

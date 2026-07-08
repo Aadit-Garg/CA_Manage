@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}My Approval Requests — CA Manage{% endblock %}
+{% block title %}My Approval Requests — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -24,7 +24,7 @@
                 {% if requests %}
                     {% for req in requests %}
                     <tr>
-                        <td class="ps-4 text-muted small">{{ req.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                        <td class="ps-4 text-muted small">{{ req.created_at|ist('%b %d, %Y %I:%M %p') }}</td>
                         <td class="fw-medium">
                             {{ req.document.title if req.document else 'Deleted Document' }}
                         </td>
@@ -44,7 +44,7 @@
                             {% if req.status == 'Rejected' and req.rejection_reason %}
                                 <span class="small text-danger">Reason: {{ req.rejection_reason }}</span>
                             {% elif req.reviewed_at %}
-                                <span class="small text-muted">Reviewed on {{ req.reviewed_at.strftime('%b %d, %Y') }}</span>
+                                <span class="small text-muted">Reviewed on {{ req.reviewed_at|ist('%b %d, %Y') }}</span>
                             {% else %}
                                 <span class="small text-muted">—</span>
                             {% endif %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin Dashboard — CA Manage{% endblock %}
+{% block title %}Admin Dashboard — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -92,7 +92,7 @@
                     {% for log in recent_activity %}
                     <div class="list-group-item py-3 px-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted">{{ log.created_at.strftime('%I:%M %p, %b %d') }}</small>
+                            <small class="text-muted">{{ log.created_at|ist('%I:%M %p, %b %d') }}</small>
                             <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.65rem;">{{ log.module }}</span>
                         </div>
                         <p class="mb-1 fw-medium text-dark">{{ log.description }}</p>
@@ -131,7 +131,7 @@
                     {% if recent_upload_sessions %}
                         {% for session in recent_upload_sessions %}
                         <tr>
-                            <td class="ps-4 fw-medium text-dark">{{ session.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                            <td class="ps-4 fw-medium text-dark">{{ session.created_at|ist('%b %d, %Y %I:%M %p') }}</td>
                             <td>{{ session.user.full_name }} <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-1">{{ session.role | title }}</span></td>
                             <td class="text-center fw-bold">{{ session.total_files }}</td>
                             <td class="text-center text-success fw-bold">{{ session.successful_uploads }}</td>
@@ -175,7 +175,7 @@
                             <td class="ps-4 fw-medium text-dark">{{ doc.title }}</td>
                             <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">{{ doc.category }}</span></td>
                             <td>{{ doc.client.company_name }}</td>
-                            <td class="text-muted small text-end pe-4">{{ doc.created_at.strftime('%b %d, %Y') }}</td>
+                            <td class="text-muted small text-end pe-4">{{ doc.created_at|ist('%b %d, %Y') }}</td>
                         </tr>
                         {% endfor %}
                     {% else %}

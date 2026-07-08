@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Employee Details — CA Manage{% endblock %}
+{% block title %}Employee Details — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -73,7 +73,7 @@
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Joining Date</small>
-                        <span class="fw-medium text-dark">{{ employee.joining_date.strftime('%B %d, %Y') if employee.joining_date else '—' }}</span>
+                        <span class="fw-medium text-dark">{{ employee.joining_date|ist('%B %d, %Y') if employee.joining_date else '—' }}</span>
                     </div>
                     <div class="col-12">
                         <small class="text-muted d-block">Notes</small>
@@ -89,11 +89,11 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <small class="text-muted d-block">Last Login</small>
-                        <span class="fw-medium text-dark">{{ employee.user.last_login.strftime('%B %d, %Y %I:%M %p') if employee.user.last_login else 'Never' }}</span>
+                        <span class="fw-medium text-dark">{{ employee.user.last_login|ist('%B %d, %Y %I:%M %p') if employee.user.last_login else 'Never' }}</span>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Password Last Changed</small>
-                        <span class="fw-medium text-dark">{{ employee.user.password_changed_at.strftime('%B %d, %Y %I:%M %p') if employee.user.password_changed_at else 'Never' }}</span>
+                        <span class="fw-medium text-dark">{{ employee.user.password_changed_at|ist('%B %d, %Y %I:%M %p') if employee.user.password_changed_at else 'Never' }}</span>
                     </div>
                 </div>
             </div>

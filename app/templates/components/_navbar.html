@@ -41,7 +41,7 @@
                 {% for n in recent_notifications %}
                 <li>
                     <a class="dropdown-item {% if not n.is_read %}fw-bold bg-light{% endif %}" href="{{ n.link or '#' }}" onclick="markRead(event, {{ n.id }}, '{{ n.link or '#' }}')">
-                        <small class="d-block text-muted">{{ n.created_at.strftime('%b %d, %H:%M') }}</small>
+                        <small class="d-block text-muted">{{ n.created_at|ist('%b %d, %H:%M') }}</small>
                         <span class="text-wrap">{{ n.message }}</span>
                     </a>
                 </li>

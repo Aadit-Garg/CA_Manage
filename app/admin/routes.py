@@ -170,6 +170,27 @@ def reset_system_admin_password(id):
     return render_template('admin/system_admins/reset_password.html', form=form, admin=admin)
 
 
+@admin_bp.route('/system-admins/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_system_admin(id):
+    """Delete a system administrator."""
+    admin = User.query.get_or_404(id)
+    if admin.role != User.ROLE_ADMIN:
+        flash("Invalid user role.", "danger")
+        return redirect(url_for('admin.system_admins_list'))
+        
+    if admin.id == current_user.id:
+        flash("You cannot delete your own account.", "danger")
+        return redirect(url_for('admin.system_admins_list'))
+
+    db.session.delete(admin)
+    db.session.commit()
+
+    log_user_action(logger, current_user, 'delete_admin', module='admin', description=f'Deleted admin {admin.email}')
+    flash(f"System Administrator {admin.full_name} has been deleted.", 'success')
+    return redirect(url_for('admin.system_admins_list'))
+
+
 # ── Employee Management ──────────────────────────────────────────────
 @admin_bp.route('/employees')
 @admin_required
@@ -299,6 +320,21 @@ def reset_employee_password(id):
         return redirect(url_for('admin.employees_list'))
 
     return render_template('admin/employees/reset_password.html', form=form, employee=employee)
+
+
+@admin_bp.route('/employees/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_employee(id):
+    """Delete an employee and their profile."""
+    employee = Employee.query.get_or_404(id)
+    user = employee.user
+    
+    db.session.delete(user)
+    db.session.commit()
+
+    log_user_action(logger, current_user, 'delete_employee', module='employees', description=f'Deleted employee {employee.email}')
+    flash(f"Employee {employee.full_name} has been deleted.", 'success')
+    return redirect(url_for('admin.employees_list'))
 
 
 @admin_bp.route('/employees/<int:id>')
@@ -679,17 +715,15 @@ def upload_document():
     if request.method == 'POST':
         client_id = request.form.get('client_id', type=int)
         client = ClientProfile.query.get_or_404(client_id)
-        file = request.files.get('file')
         
-        if not file or file.filename == '':
+        if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
             flash('Please upload a valid PDF file.', 'danger')
             return render_template('admin/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
             
         try:
-            upload_res = upload_pdf(file)
-            
-            # Prevent duplicate files
-            existing = Document.query.filter_by(file_hash=upload_res['file_hash'], status='Active').first()
+            # We don't have file hash anymore since it was uploaded directly
+            # We can use cloudinary_public_id for uniqueness check
+            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
             if existing:
                 flash('This document has already been uploaded in the system.', 'warning')
                 return render_template('admin/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
@@ -701,11 +735,11 @@ def upload_document():
                 tags=form.tags.data.strip() if form.tags.data else None,
                 document_type=form.document_type.data,
                 financial_year=form.financial_year.data,
-                cloudinary_public_id=upload_res['cloudinary_public_id'],
-                cloudinary_url=upload_res['cloudinary_url'],
-                original_filename=upload_res['original_filename'],
-                file_size=upload_res['file_size'],
-                file_hash=upload_res['file_hash'],
+                cloudinary_public_id=form.cloudinary_public_id.data,
+                cloudinary_url=form.cloudinary_url.data,
+                original_filename=form.original_filename.data,
+                file_size=int(form.file_size.data),
+                file_hash=None, # File hash cannot be reliably calculated from client side securely without heavy JS
                 upload_version=1,
                 uploaded_by_id=current_user.id,
                 approved_by_id=current_user.id,
@@ -785,12 +819,13 @@ def replace_document(id):
     form = DocumentReplaceForm()
 
     if form.validate_on_submit():
-        file = form.file.data
-        try:
-            upload_res = upload_pdf(file)
+        if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
+            flash('Please upload a replacement file first.', 'danger')
+            return render_template('admin/documents/replace.html', form=form, document=doc)
             
+        try:
             # Duplicate check
-            existing = Document.query.filter_by(file_hash=upload_res['file_hash'], status='Active').first()
+            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
             if existing:
                 flash('This file matches an existing document.', 'warning')
                 return render_template('admin/documents/replace.html', form=form, document=doc)
@@ -809,11 +844,11 @@ def replace_document(id):
             db.session.add(history)
 
             # Update Document with new file details
-            doc.cloudinary_public_id = upload_res['cloudinary_public_id']
-            doc.cloudinary_url = upload_res['cloudinary_url']
-            doc.original_filename = upload_res['original_filename']
-            doc.file_size = upload_res['file_size']
-            doc.file_hash = upload_res['file_hash']
+            doc.cloudinary_public_id = form.cloudinary_public_id.data
+            doc.cloudinary_url = form.cloudinary_url.data
+            doc.original_filename = form.original_filename.data
+            doc.file_size = int(form.file_size.data)
+            doc.file_hash = None
             doc.uploaded_by_id = current_user.id
             doc.upload_version += 1
             
@@ -859,6 +894,49 @@ def delete_document(id):
     log_user_action(logger, current_user, 'delete_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Deleted document {doc.title}')
     flash(f"Document '{doc.title}' soft-deleted.", 'success')
     return redirect(url_for('admin.documents_list'))
+
+
+@admin_bp.route('/documents/<int:id>/download')
+@admin_required
+def download_document(id):
+    """Proxied download route for admin."""
+    from flask import Response
+    import requests
+    doc = Document.query.get_or_404(id)
+    try:
+        r = requests.get(doc.cloudinary_url, stream=True)
+        if r.status_code == 200:
+            return Response(
+                r.iter_content(chunk_size=8192),
+                content_type='application/pdf',
+                headers={'Content-Disposition': f'attachment; filename="{doc.original_filename}"'}
+            )
+    except Exception as e:
+        pass
+    flash('Error downloading file from storage.', 'danger')
+    return redirect(url_for('admin.documents_list'))
+
+
+@admin_bp.route('/documents/<int:id>/preview')
+@admin_required
+def preview_document(id):
+    """Proxied inline preview route for admin."""
+    from flask import Response
+    import requests
+    doc = Document.query.get_or_404(id)
+    try:
+        r = requests.get(doc.cloudinary_url, stream=True)
+        if r.status_code == 200:
+            return Response(
+                r.iter_content(chunk_size=8192),
+                content_type='application/pdf',
+                headers={'Content-Disposition': f'inline; filename="{doc.original_filename}"'}
+            )
+    except Exception as e:
+        pass
+    flash('Error previewing file.', 'danger')
+    return redirect(url_for('admin.documents_list'))
+
 
 
 @admin_bp.route('/documents/<int:id>/history')

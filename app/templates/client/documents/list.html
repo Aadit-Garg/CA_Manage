@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set requires_desktop = true %}
-{% block title %}My Documents — CA Manage{% endblock %}
+{% block title %}My Documents — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -93,7 +93,7 @@
                         </td>
                         <td>{{ doc.document_type }}</td>
                         <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">FY {{ doc.financial_year }}</span></td>
-                        <td class="text-muted small">{{ doc.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-muted small">{{ doc.created_at|ist('%b %d, %Y') }}</td>
                         <td class="text-muted small">{{ (doc.file_size / 1024 / 1024) | round(2) }} MB</td>
                         <td class="pe-4 text-end">
                             <div class="d-inline-flex gap-1">

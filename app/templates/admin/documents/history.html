@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Version History — CA Manage{% endblock %}
+{% block title %}Version History — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -26,7 +26,7 @@
                 </div>
                 <div class="mb-3">
                     <span class="text-muted d-block">Last Updated</span>
-                    <strong class="text-dark">{{ document.updated_at.strftime('%b %d, %Y %I:%M %p') }}</strong>
+                    <strong class="text-dark">{{ document.updated_at|ist('%b %d, %Y %I:%M %p') }}</strong>
                 </div>
                 <div class="mb-3">
                     <span class="text-muted d-block">File Size</span>
@@ -66,7 +66,7 @@
                                     </div>
                                 </td>
                                 <td>{{ ver.uploader.full_name }}</td>
-                                <td class="text-muted small">{{ ver.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                <td class="text-muted small">{{ ver.created_at|ist('%b %d, %Y %I:%M %p') }}</td>
                                 <td class="pe-4 text-end">
                                     <form method="POST" action="{{ url_for('admin.restore_document_version', v_id=ver.id) }}" onsubmit="return confirm('Are you sure you want to restore version {{ ver.version_number }} as the current live version?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

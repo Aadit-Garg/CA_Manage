@@ -207,18 +207,14 @@ def upload_document():
         client_id = request.form.get('client_id', type=int)
         client = ClientProfile.query.get_or_404(client_id)
         
-        # Verify file is selected and valid
-        file = request.files.get('file')
-        if not file or file.filename == '':
+        # Verify file is uploaded
+        if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
             flash('Please select a valid PDF file.', 'danger')
             return render_template('employee/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
             
         try:
-            # Upload to Cloudinary
-            upload_res = upload_pdf(file)
-            
             # Check for duplicate hashes in existing approved documents
-            existing = Document.query.filter_by(file_hash=upload_res['file_hash'], status='Active').first()
+            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
             if existing:
                 flash('This file has already been uploaded in the system.', 'warning')
                 return render_template('employee/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
@@ -231,11 +227,11 @@ def upload_document():
                 tags=form.tags.data.strip() if form.tags.data else None,
                 document_type=form.document_type.data,
                 financial_year=form.financial_year.data,
-                cloudinary_public_id=upload_res['cloudinary_public_id'],
-                cloudinary_url=upload_res['cloudinary_url'],
-                original_filename=upload_res['original_filename'],
-                file_size=upload_res['file_size'],
-                file_hash=upload_res['file_hash'],
+                cloudinary_public_id=form.cloudinary_public_id.data,
+                cloudinary_url=form.cloudinary_url.data,
+                original_filename=form.original_filename.data,
+                file_size=int(form.file_size.data),
+                file_hash=None,
                 upload_version=1,
                 uploaded_by_id=current_user.id,
                 approved=False,
@@ -304,12 +300,13 @@ def replace_document(id):
     form = DocumentReplaceForm()
 
     if form.validate_on_submit():
-        file = form.file.data
-        try:
-            upload_res = upload_pdf(file)
+        if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
+            flash('Please upload a replacement file first.', 'danger')
+            return render_template('employee/documents/replace.html', form=form, document=doc)
             
+        try:
             # Check duplicates
-            existing = Document.query.filter_by(file_hash=upload_res['file_hash'], status='Active').first()
+            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
             if existing:
                 flash('This file matches an existing document.', 'warning')
                 return render_template('employee/documents/replace.html', form=form, document=doc)
@@ -327,11 +324,11 @@ def replace_document(id):
                     'file_hash': doc.file_hash
                 }),
                 proposed_values=json.dumps({
-                    'cloudinary_public_id': upload_res['cloudinary_public_id'],
-                    'cloudinary_url': upload_res['cloudinary_url'],
-                    'original_filename': upload_res['original_filename'],
-                    'file_size': upload_res['file_size'],
-                    'file_hash': upload_res['file_hash']
+                    'cloudinary_public_id': form.cloudinary_public_id.data,
+                    'cloudinary_url': form.cloudinary_url.data,
+                    'original_filename': form.original_filename.data,
+                    'file_size': int(form.file_size.data),
+                    'file_hash': None
                 }),
                 status='Pending'
             )

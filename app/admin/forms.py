@@ -195,8 +195,7 @@ class AdminResetPasswordForm(FlaskForm):
 
 
 # ── Document Management Forms ────────────────────────────────────────
-from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import MultipleFileField
+from wtforms import HiddenField
 
 class DocumentUploadForm(FlaskForm):
     title = StringField('Document Title', validators=[
@@ -229,10 +228,10 @@ class DocumentUploadForm(FlaskForm):
         ('2026-27', '2026-27')
     ], default='2025-26', render_kw={'class': 'form-select'})
     
-    file = FileField('Upload PDF File', validators=[
-        FileRequired(message='PDF file is required'),
-        FileAllowed(['pdf'], 'Only PDF documents are allowed.')
-    ], render_kw={'class': 'form-control', 'accept': 'application/pdf'})
+    cloudinary_url = HiddenField('Cloudinary URL', validators=[DataRequired(message="Please upload a document.")])
+    cloudinary_public_id = HiddenField('Cloudinary Public ID', validators=[DataRequired()])
+    original_filename = HiddenField('Original Filename', validators=[DataRequired()])
+    file_size = HiddenField('File Size', validators=[DataRequired()])
     
     tags = StringField('Tags', validators=[
         Optional(),
@@ -246,7 +245,7 @@ class DocumentUploadForm(FlaskForm):
         Length(min=4, message='Password must be at least 4 characters')
     ], render_kw={'class': 'form-control', 'placeholder': 'Keep blank to leave unprotected'})
     
-    submit = SubmitField('Upload Document', render_kw={'class': 'btn btn-primary'})
+    submit = SubmitField('Save Document', render_kw={'class': 'btn btn-primary'})
 
 
 class DocumentEditForm(FlaskForm):
@@ -296,20 +295,19 @@ class DocumentEditForm(FlaskForm):
 
 
 class DocumentReplaceForm(FlaskForm):
-    file = FileField('Upload Replacement PDF File', validators=[
-        FileRequired(message='PDF file is required'),
-        FileAllowed(['pdf'], 'Only PDF documents are allowed.')
-    ], render_kw={'class': 'form-control', 'accept': 'application/pdf'})
+    cloudinary_url = HiddenField('Cloudinary URL', validators=[DataRequired(message="Please upload a document.")])
+    cloudinary_public_id = HiddenField('Cloudinary Public ID', validators=[DataRequired()])
+    original_filename = HiddenField('Original Filename', validators=[DataRequired()])
+    file_size = HiddenField('File Size', validators=[DataRequired()])
     
-    submit = SubmitField('Replace PDF', render_kw={'class': 'btn btn-primary'})
+    submit = SubmitField('Save Replacement', render_kw={'class': 'btn btn-primary'})
 
 
 class BulkUploadForm(FlaskForm):
-    files = MultipleFileField('Upload PDF Files', validators=[
-        DataRequired(message='At least one PDF file is required')
-    ], render_kw={'class': 'form-control', 'accept': 'application/pdf', 'multiple': True})
+    # Store JSON array of uploaded file metadata
+    uploaded_files_data = HiddenField('Uploaded Files Data', validators=[DataRequired(message="Please upload at least one document.")])
     
-    submit = SubmitField('Upload Files', render_kw={'class': 'btn btn-primary'})
+    submit = SubmitField('Process Uploads', render_kw={'class': 'btn btn-primary'})
 
 
 class PasswordGatewayForm(FlaskForm):

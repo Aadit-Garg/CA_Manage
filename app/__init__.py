@@ -99,9 +99,13 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_globals():
         return {
-            'app_name': app.config.get('APP_NAME', 'CA Manage'),
+            'app_name': app.config.get('APP_NAME', 'Sumit N Garg Associates'),
             'app_description': app.config.get('APP_DESCRIPTION', ''),
         }
+
+    # ── Jinja Filters ───────────────────────────────────────────────
+    from .utils.timezone import to_ist
+    app.jinja_env.filters['ist'] = to_ist
 
     # ── Shell context ───────────────────────────────────────────────
     @app.shell_context_processor

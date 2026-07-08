@@ -53,8 +53,8 @@ class Config:
     CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
     # Application
-    APP_NAME = 'CA Manage'
-    APP_DESCRIPTION = 'Secure Document Portal & Practice Management'
+    APP_NAME = os.getenv('APP_NAME', 'Sumit N Garg Associates')
+    APP_DESCRIPTION = os.getenv('APP_DESCRIPTION', 'Client and Office Management Portal')
 
 
 class DevelopmentConfig(Config):

@@ -82,7 +82,7 @@
                                         <span class="badge bg-danger ms-1 rounded-pill" style="font-size: 0.65rem;">High Priority</span>
                                         {% endif %}
                                     </h6>
-                                    <small class="text-muted text-nowrap ms-3">{{ notif.created_at.strftime('%b %d, %I:%M %p') }}</small>
+                                    <small class="text-muted text-nowrap ms-3">{{ notif.created_at|ist('%b %d, %I:%M %p') }}</small>
                                 </div>
                                 
                                 <p class="mb-2 {% if not notif.is_read %}text-dark{% else %}text-muted{% endif %} fs-6">{{ notif.message }}</p>

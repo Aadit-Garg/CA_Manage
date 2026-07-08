@@ -144,6 +144,52 @@ def edit_attendance(id):
     return render_template('admin/attendance/edit.html', record=record, employee=employee)
 
 
+@admin_bp.route('/attendance/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_attendance(id):
+    """Delete an attendance record."""
+    record = Attendance.query.get_or_404(id)
+    employee_name = record.employee.full_name
+    date_str = record.date.strftime('%Y-%m-%d')
+    
+    db.session.delete(record)
+    db.session.commit()
+    
+    log_user_action(logger, current_user, 'delete_attendance', module='attendance', description=f'Deleted attendance record {id} for {employee_name} on {date_str}')
+    flash(f'Attendance record for {date_str} deleted successfully.', 'success')
+    return redirect(request.referrer or url_for('admin.attendance_dashboard'))
+
+
+@admin_bp.route('/attendance/<int:id>/revert-punch-out', methods=['POST'])
+@admin_required
+def revert_punch_out(id):
+    """Revert an accidental punch out by clearing punch_out_time."""
+    record = Attendance.query.get_or_404(id)
+    
+    if record.punch_out_time is None:
+        flash('This record does not have a punch out time to revert.', 'warning')
+        return redirect(request.referrer or url_for('admin.attendance_dashboard'))
+        
+    record.punch_out_time = None
+    record.corrected_by_id = current_user.id
+    record.notes = (record.notes or '') + f'\n[Punch out reverted by {current_user.full_name}]'
+    db.session.commit()
+    
+    # Notify employee
+    from ..utils.notification import create_notification
+    create_notification(
+        record.employee_id, 
+        f"Your punch-out for {record.date.strftime('%Y-%m-%d')} has been reverted by {current_user.full_name}.", 
+        link=url_for('employee.attendance_history'),
+        title='Punch-out Reverted',
+        category='attendance'
+    )
+    
+    log_user_action(logger, current_user, 'revert_punch_out', module='attendance', entity_type='Attendance', entity_id=id, description=f'Reverted punch out for record {id}')
+    flash('Punch out time reverted successfully.', 'success')
+    return redirect(request.referrer or url_for('admin.attendance_dashboard'))
+
+
 @admin_bp.route('/attendance/create', methods=['GET', 'POST'])
 @admin_required
 def create_attendance():

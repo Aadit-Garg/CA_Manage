@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set requires_desktop = true %}
-{% block title %}Manage Documents — CA Manage{% endblock %}
+{% block title %}Manage Documents — Sumit N Garg Associates{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -107,6 +107,12 @@
                         <td>v{{ doc.upload_version }}</td>
                         <td class="pe-4 text-end">
                             <div class="d-inline-flex gap-1">
+                                <a href="{{ url_for('admin.preview_document', id=doc.id) }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Preview" target="_blank">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('admin.download_document', id=doc.id) }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Download">
+                                    <i class="bi bi-download"></i>
+                                </a>
                                 <a href="{{ url_for('admin.replace_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Replace File">
                                     <i class="bi bi-arrow-left-right"></i>
                                 </a>

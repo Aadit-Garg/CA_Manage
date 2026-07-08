@@ -62,7 +62,7 @@
                 {% if logs %}
                     {% for log in logs %}
                     <tr>
-                        <td class="ps-4 fw-medium text-dark" style="white-space: nowrap;">{{ log.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                        <td class="ps-4 fw-medium text-dark" style="white-space: nowrap;">{{ log.created_at|ist('%b %d, %Y %I:%M %p') }}</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-secondary opacity-75">{{ log.user_role|upper }}</span>
@@ -103,7 +103,7 @@
                                         </div>
                                         <div class="col-md-6">
                                             <p class="mb-1 small text-muted text-uppercase">Timestamp (UTC)</p>
-                                            <p class="mb-0 fw-medium">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                            <p class="mb-0 fw-medium">{{ log.created_at|ist('%Y-%m-%d %H:%M:%S') }}</p>
                                         </div>
                                         <div class="col-md-6">
                                             <p class="mb-1 small text-muted text-uppercase">User</p>
