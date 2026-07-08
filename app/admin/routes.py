@@ -367,7 +367,8 @@ def clients_list():
     search = request.args.get('search', '').strip()
     status_filter = request.args.get('status', '')
 
-    query = ClientProfile.query.join(User)
+    # Specify the foreign key to avoid AmbiguousForeignKeysError
+    query = ClientProfile.query.join(User, ClientProfile.user_id == User.id)
     if status_filter == 'Enabled':
         query = query.filter(User.is_active == True)
     elif status_filter == 'Disabled':
