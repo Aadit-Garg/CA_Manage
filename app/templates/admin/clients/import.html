@@ -17,7 +17,7 @@
             <div class="ca-card-header">Step 1: Download Excel Template</div>
             <div class="ca-card-body">
                 <p class="small text-muted mb-3">Our template includes formatting, field instructions, format rules (GSTIN, PAN), and an example row to guide your input.</p>
-                <a href="{{ url_for('admin.download_import_template') }}" class="btn btn-outline-primary w-100 fw-semibold"><i class="bi bi-download me-2"></i>Download Template (.xlsx)</a>
+                <a href="{{ url_for('admin.download_import_template') }}" data-turbo="false" class="btn btn-outline-primary w-100 fw-semibold"><i class="bi bi-download me-2"></i>Download Template (.xlsx)</a>
             </div>
         </div>
         
@@ -38,7 +38,7 @@
         <div class="ca-card">
             <div class="ca-card-header">Step 2: Upload Completed Template</div>
             <div class="ca-card-body">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" data-turbo="false">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <div class="mb-4">

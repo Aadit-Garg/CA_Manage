@@ -71,6 +71,11 @@ self.addEventListener('fetch', (event) => {
     // Skip chrome-extension and other non-http(s) requests
     if (!url.protocol.startsWith('http')) return;
 
+    // Skip file downloads to prevent Service Worker blob interception issues
+    if (url.pathname.includes('export') || url.pathname.includes('download') || url.pathname.includes('import-template')) {
+        return;
+    }
+
     // Strategy: Cache-first for static assets
     if (isStaticAsset(url)) {
         event.respondWith(cacheFirst(request));
