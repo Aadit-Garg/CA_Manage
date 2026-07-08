@@ -98,6 +98,11 @@ class ClientForm(FlaskForm):
         Length(max=255)
     ], render_kw={'class': 'form-control'})
     
+    password = PasswordField('Password', validators=[
+        Optional(),
+        Length(min=8, message='Password must be at least 8 characters long')
+    ], render_kw={'class': 'form-control', 'placeholder': 'Leave blank for default (Client@123)'})
+    
     phone = StringField('Phone Number', validators=[
         Optional(),
         Length(max=20)

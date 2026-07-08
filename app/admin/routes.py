@@ -405,7 +405,10 @@ def create_client():
             role=User.ROLE_CLIENT,
             is_active=True
         )
-        user.set_password('Client@123')
+        
+        password = form.password.data if form.password.data else 'Client@123'
+        user.set_password(password)
+        
         db.session.add(user)
         db.session.flush()
 
@@ -438,7 +441,8 @@ def create_client():
         db.session.commit()
 
         log_user_action(logger, current_user, 'create_client', module='clients', entity_type='ClientProfile', entity_id=profile.id, description=f'Created client {profile.email}')
-        flash(f"Client {profile.full_name} created. Default password: 'Client@123'.", 'success')
+        pwd_msg = "Custom password set." if form.password.data else "Default password: 'Client@123'."
+        flash(f"Client {profile.full_name} created. {pwd_msg}", 'success')
         return redirect(url_for('admin.clients_list'))
 
     return render_template('admin/clients/new.html', form=form)
@@ -460,6 +464,10 @@ def edit_client(id):
         user.email = profile.email
         user.full_name = profile.full_name
         user.phone = profile.phone
+        
+        if form.password.data:
+            user.set_password(form.password.data)
+            
         db.session.commit()
         
         create_timeline_event(
