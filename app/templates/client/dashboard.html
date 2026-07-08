@@ -50,7 +50,7 @@
                             <td class="small">{{ doc.document_type }}</td>
                             <td class="text-muted small">{{ doc.created_at|ist('%b %d, %Y') }}</td>
                             <td class="pe-4 text-end">
-                                <a href="{{ url_for('client_portal.download_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-0" title="Download">
+                                <a href="{{ url_for('client_portal.download_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-0" title="Download" data-turbo="false">
                                     <i class="bi bi-download"></i>
                                 </a>
                             </td>

@@ -10,7 +10,7 @@
             <p class="text-muted small">Sign in to your account</p>
         </div>
 
-        <form method="POST" action="{{ url_for('auth.login') }}" data-turbo="false">
+        <form method="POST" action="{{ url_for('auth.login') }}" data-turbo="false" id="loginForm">
             {{ form.hidden_tag() }}
             
             <div class="mb-3">
@@ -37,10 +37,26 @@
                 {{ form.remember_me.label(class="form-check-label text-muted small") }}
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
-                Sign In
+            <button type="submit" class="btn btn-primary w-100 fw-semibold py-2 d-flex align-items-center justify-content-center gap-2" id="loginSubmitBtn">
+                <span class="submit-text">Sign In</span>
+                <span class="spinner-border spinner-border-sm d-none" id="loginSpinner" role="status" aria-hidden="true"></span>
             </button>
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('loginForm');
+        if(form) {
+            form.addEventListener('submit', function() {
+                var btn = document.getElementById('loginSubmitBtn');
+                var spinner = document.getElementById('loginSpinner');
+                btn.disabled = true;
+                btn.querySelector('.submit-text').textContent = 'Signing in...';
+                spinner.classList.remove('d-none');
+            });
+        }
+    });
+</script>
 {% endblock %}

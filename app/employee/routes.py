@@ -142,6 +142,35 @@ def view_client(id):
     return render_template('employee/clients/view.html', client=client, documents=documents)
 
 
+# ── Document Access ──────────────────────────────────────────────────
+@employee_bp.route('/documents/<int:id>/download')
+@employee_required
+def download_document(id):
+    """Proxied download route for employees."""
+    doc = Document.query.get_or_404(id)
+    if doc.password_protected:
+        unlocked = session.get('unlocked_documents', [])
+        if doc.id not in unlocked:
+            return redirect(url_for('employee.password_change_request', id=doc.id))
+
+    url = doc.cloudinary_url
+    url = url.replace('/upload/', '/upload/fl_attachment/')
+    return redirect(url)
+
+@employee_bp.route('/documents/<int:id>/preview')
+@employee_required
+def preview_document(id):
+    """Proxied inline preview route for employees."""
+    doc = Document.query.get_or_404(id)
+    if doc.password_protected:
+        unlocked = session.get('unlocked_documents', [])
+        if doc.id not in unlocked:
+            return redirect(url_for('employee.password_change_request', id=doc.id))
+
+    url = doc.cloudinary_url
+    return redirect(url)
+
+
 # ── Document Management (Workflow Requests) ──────────────────────────
 @employee_bp.route('/documents')
 @employee_required
