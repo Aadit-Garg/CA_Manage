@@ -741,6 +741,10 @@ def upload_document():
 
     if request.method == 'POST':
         client_id = request.form.get('client_id', type=int)
+        if not client_id:
+            flash('Please select a client.', 'danger')
+            return render_template('admin/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
+            
         client = ClientProfile.query.get_or_404(client_id)
         
         if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
@@ -930,7 +934,11 @@ def download_document(id):
     import urllib.parse
     doc = Document.query.get_or_404(id)
     safe_filename = urllib.parse.quote(doc.original_filename)
-    download_url = doc.cloudinary_url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    url = doc.cloudinary_url
+    # For raw uploads, convert to image delivery for proper PDF download
+    if '/raw/upload/' in url:
+        url = url.replace('/raw/upload/', '/image/upload/')
+    download_url = url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
     return redirect(download_url)
 
 
@@ -939,7 +947,11 @@ def download_document(id):
 def preview_document(id):
     """Proxied inline preview route for admin."""
     doc = Document.query.get_or_404(id)
-    return redirect(doc.cloudinary_url)
+    url = doc.cloudinary_url
+    # For raw uploads, convert to image delivery for inline PDF preview
+    if '/raw/upload/' in url:
+        url = url.replace('/raw/upload/', '/image/upload/')
+    return redirect(url)
 
 
 

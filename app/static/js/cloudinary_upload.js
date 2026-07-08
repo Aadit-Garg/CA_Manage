@@ -35,7 +35,7 @@ async function initCloudinaryUploads() {
             uploadSignatureTimestamp: sigData.timestamp,
             uploadSignature: sigData.signature,
             folder: sigData.folder,
-            resourceType: 'raw', // Important for PDFs
+            resourceType: 'auto', // auto-detect resource type for proper PDF handling
             clientAllowedFormats: ['pdf'],
             maxFileSize: 25000000, // 25MB
             sources: ['local', 'google_drive'],

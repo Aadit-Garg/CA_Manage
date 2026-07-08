@@ -180,7 +180,10 @@ def download_document(id):
             return redirect(url_for('client_portal.unlock_document', id=doc.id, action='download'))
 
     safe_filename = urllib.parse.quote(doc.original_filename)
-    download_url = doc.cloudinary_url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    url = doc.cloudinary_url
+    if '/raw/upload/' in url:
+        url = url.replace('/raw/upload/', '/image/upload/')
+    download_url = url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
     return redirect(download_url)
 
 
@@ -196,4 +199,7 @@ def preview_document(id):
         if doc.id not in unlocked:
             return redirect(url_for('client_portal.unlock_document', id=doc.id, action='preview'))
 
-    return redirect(doc.cloudinary_url)
+    url = doc.cloudinary_url
+    if '/raw/upload/' in url:
+        url = url.replace('/raw/upload/', '/image/upload/')
+    return redirect(url)
