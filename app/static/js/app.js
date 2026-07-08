@@ -149,7 +149,10 @@ document.addEventListener('turbo:click', (event) => {
 // Show global loader overlay on form submissions
 document.addEventListener('turbo:submit-start', () => {
     const loader = document.getElementById('global-loader');
-    if (loader) loader.classList.remove('d-none');
+    if (loader) {
+        loader.classList.remove('d-none');
+        loader.classList.add('d-flex');
+    }
 });
 
 document.addEventListener('turbo:load', () => {
@@ -157,6 +160,7 @@ document.addEventListener('turbo:load', () => {
     const loader = document.getElementById('global-loader');
     if (loader) {
         setTimeout(() => {
+            loader.classList.remove('d-flex');
             loader.classList.add('d-none');
         }, 50);
     }
@@ -174,7 +178,10 @@ document.addEventListener('turbo:load', () => {
 
 document.addEventListener('turbo:submit-end', () => {
     const loader = document.getElementById('global-loader');
-    if (loader) loader.classList.add('d-none');
+    if (loader) {
+        loader.classList.remove('d-flex');
+        loader.classList.add('d-none');
+    }
 });
 
 

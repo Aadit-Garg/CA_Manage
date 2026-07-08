@@ -365,11 +365,13 @@ def clients_list():
     """Paginated, searchable list of clients."""
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '').strip()
-    status_filter = request.args.get('status', 'Active')
+    status_filter = request.args.get('status', '')
 
-    query = ClientProfile.query
-    if status_filter:
-        query = query.filter(ClientProfile.status == status_filter)
+    query = ClientProfile.query.join(User)
+    if status_filter == 'Enabled':
+        query = query.filter(User.is_active == True)
+    elif status_filter == 'Disabled':
+        query = query.filter(User.is_active == False)
 
     if search:
         query = query.filter(

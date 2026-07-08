@@ -28,8 +28,9 @@
             
             <div class="col-auto">
                 <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active Clients</option>
-                    <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Soft Deleted (Inactive)</option>
+                    <option value="" {% if not status_filter %}selected{% endif %}>All Clients</option>
+                    <option value="Enabled" {% if status_filter == 'Enabled' %}selected{% endif %}>Login Enabled</option>
+                    <option value="Disabled" {% if status_filter == 'Disabled' %}selected{% endif %}>Login Disabled</option>
                 </select>
             </div>
 
@@ -105,21 +106,6 @@
                                     {% endif %}
                                 </form>
                                 
-                                {% if client.status == 'Active' %}
-                                <form method="POST" action="{{ url_for('admin.delete_client', id=client.id) }}" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Soft Delete" onclick="return confirm('Are you sure you want to soft-delete this client profile?')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                                {% else %}
-                                <form method="POST" action="{{ url_for('admin.restore_client', id=client.id) }}" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Restore Profile">
-                                        <i class="bi bi-bootstrap-reboot"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
                             </div>
                         </td>
                     </tr>
