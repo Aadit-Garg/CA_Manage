@@ -164,6 +164,9 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+/* ── Utility ── */
+.min-width-0 { min-width: 0; }
+
 /* ── Mobile Responsiveness ── */
 .mobile-toggle {
     display: none;
