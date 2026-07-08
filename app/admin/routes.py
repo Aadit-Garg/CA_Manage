@@ -935,11 +935,9 @@ def download_document(id):
     doc = Document.query.get_or_404(id)
     safe_filename = urllib.parse.quote(doc.original_filename)
     url = doc.cloudinary_url
-    # For raw uploads, convert to image delivery for proper PDF download
-    if '/raw/upload/' in url:
-        url = url.replace('/raw/upload/', '/image/upload/')
-    download_url = url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
-    return redirect(download_url)
+    if '/raw/upload/' not in url:
+        url = url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    return redirect(url)
 
 
 @admin_bp.route('/documents/<int:id>/preview')
@@ -948,9 +946,6 @@ def preview_document(id):
     """Proxied inline preview route for admin."""
     doc = Document.query.get_or_404(id)
     url = doc.cloudinary_url
-    # For raw uploads, convert to image delivery for inline PDF preview
-    if '/raw/upload/' in url:
-        url = url.replace('/raw/upload/', '/image/upload/')
     return redirect(url)
 
 
