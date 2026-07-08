@@ -169,7 +169,8 @@ def unlock_document(id):
 @client_bp.route('/documents/<int:id>/download')
 @client_required
 def download_document(id):
-    """Proxied download route to securely stream files from Cloudinary, verifying password protection."""
+    """Proxied download route to securely redirect to Cloudinary, verifying password protection."""
+    import urllib.parse
     client_profile = current_user.client_profile
     doc = Document.query.filter_by(id=id, client_id=client_profile.id, approved=True, status='Active').first_or_404()
     
@@ -178,27 +179,15 @@ def download_document(id):
         if doc.id not in unlocked:
             return redirect(url_for('client_portal.unlock_document', id=doc.id, action='download'))
 
-    # Fetch stream from Cloudinary
-    try:
-        r = requests.get(doc.cloudinary_url, stream=True)
-        if r.status_code == 200:
-            return Response(
-                r.iter_content(chunk_size=8192),
-                content_type='application/pdf',
-                headers={'Content-Disposition': f'attachment; filename="{doc.original_filename}"'}
-            )
-        else:
-            flash('Error downloading file from storage.', 'danger')
-            return redirect(url_for('client_portal.documents_list'))
-    except Exception as e:
-        flash(f'An error occurred: {str(e)}', 'danger')
-        return redirect(url_for('client_portal.documents_list'))
+    safe_filename = urllib.parse.quote(doc.original_filename)
+    download_url = doc.cloudinary_url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    return redirect(download_url)
 
 
 @client_bp.route('/documents/<int:id>/preview')
 @client_required
 def preview_document(id):
-    """Proxied inline preview route to securely render PDFs, verifying password protection."""
+    """Proxied inline preview route to securely redirect to Cloudinary, verifying password protection."""
     client_profile = current_user.client_profile
     doc = Document.query.filter_by(id=id, client_id=client_profile.id, approved=True, status='Active').first_or_404()
     
@@ -207,17 +196,4 @@ def preview_document(id):
         if doc.id not in unlocked:
             return redirect(url_for('client_portal.unlock_document', id=doc.id, action='preview'))
 
-    try:
-        r = requests.get(doc.cloudinary_url, stream=True)
-        if r.status_code == 200:
-            return Response(
-                r.iter_content(chunk_size=8192),
-                content_type='application/pdf',
-                headers={'Content-Disposition': f'inline; filename="{doc.original_filename}"'}
-            )
-        else:
-            flash('Error previewing file.', 'danger')
-            return redirect(url_for('client_portal.documents_list'))
-    except Exception as e:
-        flash(f'An error occurred: {str(e)}', 'danger')
-        return redirect(url_for('client_portal.documents_list'))
+    return redirect(doc.cloudinary_url)

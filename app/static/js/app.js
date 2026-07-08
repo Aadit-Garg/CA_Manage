@@ -126,13 +126,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Show loading indicators
-        document.body.addEventListener('htmx:beforeRequest', () => {
-            // Optional: add global loading state
+        // Show skeleton loader on Turbo requests
+        document.addEventListener('turbo:before-visit', () => {
+            const skeleton = document.getElementById('page-skeleton');
+            const mainContent = document.getElementById('main-content-container');
+            if (skeleton && mainContent) {
+                skeleton.classList.remove('d-none');
+                mainContent.style.opacity = '0.5';
+            }
         });
 
-        document.body.addEventListener('htmx:afterRequest', () => {
-            // Optional: remove global loading state
+        document.addEventListener('turbo:load', () => {
+            const skeleton = document.getElementById('page-skeleton');
+            const mainContent = document.getElementById('main-content-container');
+            if (skeleton && mainContent) {
+                // Use a tiny timeout to ensure DOM rendering completes smoothly
+                setTimeout(() => {
+                    skeleton.classList.add('d-none');
+                    mainContent.style.opacity = '1';
+                }, 50);
+            }
         });
     }
 });

@@ -27,13 +27,13 @@
     <div id="step-1" class="ca-card p-5 text-center">
         <i class="bi bi-cloud-arrow-up display-1 text-primary mb-3"></i>
         <h4>Upload Documents</h4>
-        <p class="text-muted mb-4">Drag & drop PDFs here or click to browse. The system will automatically map them to clients based on the Upload UUID in the filename.</p>
+        <p class="text-muted mb-4">Click below to open the Cloudinary upload widget. The system will automatically map them to clients based on the Upload UUID in the filename after you finish uploading.</p>
         
-        <input type="file" id="file-input" class="d-none" multiple accept="application/pdf">
-        <button type="button" class="btn btn-primary px-4 py-2" onclick="document.getElementById('file-input').click()">
-            <i class="bi bi-folder2-open me-2"></i>Select PDF Files
+        <input type="hidden" id="uploaded_files_data" value="">
+        <button type="button" id="cloudinary-upload-btn" class="btn btn-primary px-4 py-2" data-multiple="true">
+            <i class="bi bi-cloud-arrow-up me-2"></i>Select PDF Files
         </button>
-        <div class="mt-3 small text-muted">Maximum 25MB per file.</div>
+        <div class="mt-3 small text-muted">Files are uploaded directly to secure storage (bypasses size limits).</div>
     </div>
 
     <!-- Step 2: Analysis Loading -->
@@ -204,35 +204,23 @@
         });
     }
     
-    // Step 1 -> 2 -> 3
-    async function handleFiles(files) {
+    let uploadedCloudinaryData = [];
+    
+    // Cloudinary upload widget will call this via cloudinary_upload.js when "close" event happens
+    window.startBulkAnalysis = async function(data) {
+        if (!data || data.length === 0) return;
+        
+        uploadedCloudinaryData = data;
+        selectedFiles = data; // Keep for compatibility with existing code
+        
         showStep(2);
         
-        // Filter out non PDFs
-        selectedFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
-        
-        if(selectedFiles.length === 0) {
-            alert('Please select valid PDF files.');
-            resetApp();
-            return;
-        }
-        
         // Build metadata payload
-        const metadataList = [];
-        for (const file of selectedFiles) {
-            // Note: Hashing could take time for many large files. We only hash the first 1MB for speed if needed, 
-            // but for typical PDFs full hash is fine.
-            let hash = '';
-            try {
-                hash = await hashFile(file);
-            } catch (e) { console.error('Hash error', e); }
-            
-            metadataList.push({
-                filename: file.name,
-                size: file.size,
-                hash: hash
-            });
-        }
+        const metadataList = data.map(f => ({
+            filename: f.original_filename,
+            size: f.file_size,
+            hash: '' // Cloudinary handles this via filename for now
+        }));
         
         // Send to backend for analysis
         try {
@@ -245,20 +233,25 @@
                 body: JSON.stringify(metadataList)
             });
             
-            const data = await response.json();
+            const resData = await response.json();
             if (response.ok) {
-                reviewedFiles = data.results.map((r, i) => ({...r, fileObj: selectedFiles[i], skip: r.status === 'Error'}));
+                // Merge analysis result with Cloudinary data
+                reviewedFiles = resData.results.map((r, i) => ({
+                    ...r, 
+                    cloudinaryData: data[i], 
+                    skip: r.status === 'Error'
+                }));
                 renderReviewTable();
                 showStep(3);
             } else {
-                alert('Analysis failed: ' + (data.error || 'Unknown error'));
+                alert('Analysis failed: ' + (resData.error || 'Unknown error'));
                 resetApp();
             }
         } catch (error) {
             alert('Network error during analysis.');
             resetApp();
         }
-    }
+    };
     
     function renderReviewTable() {
         const tbody = document.querySelector('#review-table tbody');
@@ -400,7 +393,11 @@
             
             // Build FormData
             const formData = new FormData();
-            formData.append('file', f.fileObj);
+            formData.append('cloudinary_url', f.cloudinaryData.cloudinary_url);
+            formData.append('cloudinary_public_id', f.cloudinaryData.cloudinary_public_id);
+            formData.append('original_filename', f.cloudinaryData.original_filename);
+            formData.append('file_size', f.cloudinaryData.file_size);
+            
             formData.append('client_id', f.client_id);
             formData.append('doc_type', f.doc_type);
             formData.append('fy', f.fy);

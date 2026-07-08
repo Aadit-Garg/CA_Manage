@@ -69,12 +69,22 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label fw-semibold text-dark small">{{ form.file.label.text }}</label>
-                            {{ form.file }}
-                            {% for error in form.file.errors %}
+                            <label class="form-label fw-semibold text-dark small">Upload PDF File</label>
+                            
+                            {{ form.cloudinary_url }}
+                            {{ form.cloudinary_public_id }}
+                            {{ form.original_filename }}
+                            {{ form.file_size }}
+                            
+                            <div>
+                                <button id="cloudinary-upload-btn" class="btn btn-outline-primary" data-multiple="false">
+                                    <i class="bi bi-cloud-arrow-up me-2"></i>Select File to Upload
+                                </button>
+                            </div>
+                            {% for error in form.cloudinary_url.errors %}
                                 <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
                             {% endfor %}
-                            <small class="text-muted d-block mt-1">Accepts PDF files only. Maximum upload size is 25 MB.</small>
+                            <small class="text-muted d-block mt-2">Files are uploaded directly to secure storage.</small>
                         </div>
 
                         <div class="col-12 border-top pt-3 mt-3">

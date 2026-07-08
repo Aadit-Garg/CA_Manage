@@ -900,42 +900,19 @@ def delete_document(id):
 @admin_required
 def download_document(id):
     """Proxied download route for admin."""
-    from flask import Response
-    import requests
+    import urllib.parse
     doc = Document.query.get_or_404(id)
-    try:
-        r = requests.get(doc.cloudinary_url, stream=True)
-        if r.status_code == 200:
-            return Response(
-                r.iter_content(chunk_size=8192),
-                content_type='application/pdf',
-                headers={'Content-Disposition': f'attachment; filename="{doc.original_filename}"'}
-            )
-    except Exception as e:
-        pass
-    flash('Error downloading file from storage.', 'danger')
-    return redirect(url_for('admin.documents_list'))
+    safe_filename = urllib.parse.quote(doc.original_filename)
+    download_url = doc.cloudinary_url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    return redirect(download_url)
 
 
 @admin_bp.route('/documents/<int:id>/preview')
 @admin_required
 def preview_document(id):
     """Proxied inline preview route for admin."""
-    from flask import Response
-    import requests
     doc = Document.query.get_or_404(id)
-    try:
-        r = requests.get(doc.cloudinary_url, stream=True)
-        if r.status_code == 200:
-            return Response(
-                r.iter_content(chunk_size=8192),
-                content_type='application/pdf',
-                headers={'Content-Disposition': f'inline; filename="{doc.original_filename}"'}
-            )
-    except Exception as e:
-        pass
-    flash('Error previewing file.', 'danger')
-    return redirect(url_for('admin.documents_list'))
+    return redirect(doc.cloudinary_url)
 
 
 

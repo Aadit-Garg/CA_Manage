@@ -115,6 +115,7 @@ body {
     overflow-y: auto;
     padding: 32px;
     background-color: var(--ca-main-bg);
+    position: relative;
 }
 
 /* ── UI Components ── */
