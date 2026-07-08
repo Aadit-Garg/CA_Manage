@@ -132,30 +132,33 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════════
 // Turbo Configuration & Skeleton Loader
 // ═══════════════════════════════════════════════════════════════════
-// Show skeleton loader on Turbo requests
+// Show global loader overlay on Turbo requests
 document.addEventListener('turbo:click', (event) => {
-    // Only show skeleton for sidebar/navigation links, not buttons
+    // Show loader for standard navigation links
     const link = event.target.closest('a');
     if (link && !link.classList.contains('btn')) {
-        const skeleton = document.getElementById('page-skeleton');
-        const mainContent = document.getElementById('main-content-container');
-        if (skeleton && mainContent) {
-            skeleton.classList.remove('d-none');
-            mainContent.style.opacity = '0.5';
-        }
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.classList.remove('d-none');
     }
 });
 
+document.addEventListener('turbo:submit-start', () => {
+    const loader = document.getElementById('global-loader');
+    if (loader) loader.classList.remove('d-none');
+});
+
 document.addEventListener('turbo:load', () => {
-    const skeleton = document.getElementById('page-skeleton');
-    const mainContent = document.getElementById('main-content-container');
-    if (skeleton && mainContent) {
-        // Use a tiny timeout to ensure DOM rendering completes smoothly
+    const loader = document.getElementById('global-loader');
+    if (loader) {
         setTimeout(() => {
-            skeleton.classList.add('d-none');
-            mainContent.style.opacity = '1';
+            loader.classList.add('d-none');
         }, 50);
     }
+});
+
+document.addEventListener('turbo:submit-end', () => {
+    const loader = document.getElementById('global-loader');
+    if (loader) loader.classList.add('d-none');
 });
 
 

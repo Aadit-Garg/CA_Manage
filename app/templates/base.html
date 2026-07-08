@@ -41,6 +41,15 @@
     </style>
 </head>
 <body>
+    <!-- Global Loading Screen -->
+    <div id="global-loader" class="d-none position-fixed top-0 start-0 w-100 h-100 align-items-center justify-content-center" style="background-color: rgba(255, 255, 255, 0.7); z-index: 1060; backdrop-filter: blur(2px);">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-2" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="fw-semibold text-primary">Loading...</div>
+        </div>
+    </div>
 
     {% if current_user.is_authenticated %}
         <!-- CSS Grid Layout -->
@@ -58,17 +67,6 @@
 
             <!-- Scrollable Main Content -->
             <main class="ca-main">
-                <!-- Skeleton Loader Overlay -->
-                <div id="page-skeleton" class="d-none w-100 h-100 position-absolute bg-light" style="z-index: 1040; top: 0; left: 0; padding: 1.5rem;">
-                    <div class="row g-4">
-                        <div class="col-12"><div class="placeholder-glow"><span class="placeholder col-4 rounded" style="height: 2rem;"></span></div></div>
-                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
-                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
-                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
-                        <div class="col-md-3"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 100px;"></span></div></div>
-                        <div class="col-12 mt-5"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height: 300px;"></span></div></div>
-                    </div>
-                </div>
 
                 <div class="container-fluid p-0">
                     {% if requires_desktop %}

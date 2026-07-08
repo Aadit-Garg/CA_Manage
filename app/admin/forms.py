@@ -5,12 +5,12 @@ from ..models.user import User
 from ..models.client import ClientProfile
 
 class EmployeeForm(FlaskForm):
-    full_name = StringField('Full Name', validators=[
+    full_name = StringField('Full Name *', validators=[
         DataRequired(message='Full Name is required'),
         Length(max=150)
     ], render_kw={'class': 'form-control'})
     
-    email = StringField('Email Address', validators=[
+    email = StringField('Email Address *', validators=[
         DataRequired(message='Email is required'),
         Email(message='Invalid email format'),
         Length(max=255)
@@ -55,12 +55,12 @@ class EmployeeForm(FlaskForm):
 
 
 class SystemAdminForm(FlaskForm):
-    full_name = StringField('Full Name', validators=[
+    full_name = StringField('Full Name *', validators=[
         DataRequired(message='Full Name is required'),
         Length(max=150)
     ], render_kw={'class': 'form-control'})
     
-    email = StringField('Email Address', validators=[
+    email = StringField('Email Address *', validators=[
         DataRequired(message='Email is required'),
         Email(message='Invalid email format'),
         Length(max=255)
@@ -87,12 +87,12 @@ class SystemAdminForm(FlaskForm):
 
 
 class ClientForm(FlaskForm):
-    full_name = StringField('Full Name', validators=[
+    full_name = StringField('Full Name *', validators=[
         DataRequired(message='Full Name is required'),
         Length(max=150)
     ], render_kw={'class': 'form-control'})
     
-    email = StringField('Email Address', validators=[
+    email = StringField('Email Address *', validators=[
         DataRequired(message='Email is required'),
         Email(message='Invalid email format'),
         Length(max=255)
@@ -108,7 +108,7 @@ class ClientForm(FlaskForm):
         Length(max=20)
     ], render_kw={'class': 'form-control'})
     
-    firm_name = StringField('Firm Name', validators=[
+    firm_name = StringField('Firm Name (Optional)', validators=[
         Optional(),
         Length(max=200)
     ], render_kw={'class': 'form-control'})
@@ -118,12 +118,12 @@ class ClientForm(FlaskForm):
         ('business', 'Business')
     ], render_kw={'class': 'form-select'})
 
-    PAN = StringField('PAN', validators=[
+    PAN = StringField('PAN (Optional)', validators=[
         Optional(),
         Regexp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$', message='Invalid PAN. e.g. ABCDE1234F')
     ], render_kw={'class': 'form-control', 'style': 'text-transform: uppercase;'})
     
-    GST = StringField('GSTIN', validators=[
+    GST = StringField('GSTIN (Optional)', validators=[
         Optional(),
         Regexp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$', 
                message='Invalid GSTIN. e.g. 27ABCDE1234F1Z5')
@@ -150,7 +150,7 @@ class ClientForm(FlaskForm):
     
     assigned_employee_id = SelectField('Assigned Employee', coerce=int, render_kw={'class': 'form-select'})
     
-    notes = TextAreaField('Notes', validators=[
+    notes = TextAreaField('Notes (Optional)', validators=[
         Optional()
     ], render_kw={'class': 'form-control', 'rows': 3})
     
