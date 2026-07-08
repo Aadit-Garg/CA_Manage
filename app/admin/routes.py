@@ -931,12 +931,9 @@ def delete_document(id):
 @admin_required
 def download_document(id):
     """Proxied download route for admin."""
-    import urllib.parse
     doc = Document.query.get_or_404(id)
-    safe_filename = urllib.parse.quote(doc.original_filename)
     url = doc.cloudinary_url
-    if '/raw/upload/' not in url:
-        url = url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
 
 

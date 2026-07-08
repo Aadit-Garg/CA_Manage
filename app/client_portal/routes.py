@@ -170,7 +170,6 @@ def unlock_document(id):
 @client_required
 def download_document(id):
     """Proxied download route to securely redirect to Cloudinary, verifying password protection."""
-    import urllib.parse
     client_profile = current_user.client_profile
     doc = Document.query.filter_by(id=id, client_id=client_profile.id, approved=True, status='Active').first_or_404()
     
@@ -179,10 +178,8 @@ def download_document(id):
         if doc.id not in unlocked:
             return redirect(url_for('client_portal.unlock_document', id=doc.id, action='download'))
 
-    safe_filename = urllib.parse.quote(doc.original_filename)
     url = doc.cloudinary_url
-    if '/raw/upload/' not in url:
-        url = url.replace('/upload/', f'/upload/fl_attachment:{safe_filename}/')
+    url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
 
 
