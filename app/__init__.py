@@ -85,14 +85,24 @@ def create_app(config_name=None):
         return redirect(url_for('auth.login'))
 
     @app.before_request
-    def check_password_change_required():
+    def enforce_security_checks():
         from flask import request, session, flash, redirect, url_for
-        if current_user.is_authenticated and session.get('requires_password_change'):
-            # Allow access to static files, auth endpoints, and the password change route
-            if request.endpoint and not request.endpoint.startswith('static') \
-               and request.endpoint not in ['auth.change_password', 'auth.logout']:
-                flash('You must change your default password before continuing.', 'warning')
-                return redirect(url_for('auth.change_password'))
+        
+        if current_user.is_authenticated:
+            # 1. Enforce Expiration Date for Clients
+            if current_user.role == 'client' and current_user.client_profile and current_user.client_profile.is_expired:
+                from flask_login import logout_user
+                logout_user()
+                flash('Your account login has expired. Please contact the administrator.', 'danger')
+                return redirect(url_for('auth.login'))
+
+            # 2. Enforce Default Password Change
+            if session.get('requires_password_change'):
+                # Allow access to static files, auth endpoints, and the password change route
+                if request.endpoint and not request.endpoint.startswith('static') \
+                   and request.endpoint not in ['auth.change_password', 'auth.logout']:
+                    flash('You must change your default password before continuing.', 'warning')
+                    return redirect(url_for('auth.change_password'))
 
     # ── PWA routes (serve at root path) ─────────────────────────────
     @app.route('/manifest.json')

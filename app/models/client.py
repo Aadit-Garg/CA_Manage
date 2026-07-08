@@ -60,6 +60,21 @@ class ClientProfile(db.Model):
             return self.PAN[:5] + '****' + self.PAN[9:]
         return self.PAN or '—'
 
+    @property
+    def is_expired(self):
+        """Check if the account login has expired."""
+        if self.expiration_date:
+            return self.expiration_date < datetime.now(timezone.utc).date()
+        return False
+
+    @property
+    def days_until_expiration(self):
+        """Return the number of days until the account expires. None if no expiration."""
+        if self.expiration_date:
+            delta = self.expiration_date - datetime.now(timezone.utc).date()
+            return delta.days
+        return None
+
     def __repr__(self):
         return f'<ClientProfile {self.display_name} ({self.client_code})>'
 

@@ -77,7 +77,11 @@
                         <td><code>{{ client.GST or '—' }}</code></td>
                         <td>
                             {% if client.user.is_active %}
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Login Enabled</span>
+                                {% if client.is_expired %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">Expired</span>
+                                {% else %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Login Enabled</span>
+                                {% endif %}
                             {% else %}
                                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Login Disabled</span>
                             {% endif %}

@@ -7,6 +7,15 @@
     <p class="text-muted small mb-0">{{ profile.firm_name if profile.firm_name else 'Client Portal' }}</p>
 </div>
 
+{% if profile.days_until_expiration is not none and profile.days_until_expiration <= 10 %}
+<div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+    <div>
+        <strong>Account Expiration Notice:</strong> Your account login will expire in <strong>{{ profile.days_until_expiration }} day{% if profile.days_until_expiration != 1 %}s{% endif %}</strong> on {{ profile.expiration_date.strftime('%B %d, %Y') }}. Please contact your consultant to extend your access.
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4">
     <!-- Main Left Area: Quick Actions & Recent Docs -->
     <div class="col-lg-8">
