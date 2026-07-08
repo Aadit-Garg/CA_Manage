@@ -46,17 +46,29 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function initLoginAnimation() {
         var form = document.getElementById('loginForm');
-        if(form) {
-            form.addEventListener('submit', function() {
+        if(form && !form.dataset.animationInitialized) {
+            form.dataset.animationInitialized = 'true';
+            form.addEventListener('submit', function(e) {
                 var btn = document.getElementById('loginSubmitBtn');
                 var spinner = document.getElementById('loginSpinner');
-                btn.disabled = true;
-                btn.querySelector('.submit-text').textContent = 'Signing in...';
-                spinner.classList.remove('d-none');
+                if (btn && spinner) {
+                    btn.querySelector('.submit-text').textContent = 'Signing in...';
+                    spinner.classList.remove('d-none');
+                    // Small timeout ensures the form submits before the button is disabled
+                    setTimeout(function() {
+                        btn.disabled = true;
+                    }, 50);
+                }
             });
         }
-    });
+    }
+    
+    document.addEventListener('DOMContentLoaded', initLoginAnimation);
+    document.addEventListener('turbo:load', initLoginAnimation);
+    
+    // Fallback for direct script execution
+    initLoginAnimation();
 </script>
 {% endblock %}
