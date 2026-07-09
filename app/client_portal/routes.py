@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Client Portal Dashboard & Settings Routes
+Sumit N Garg & Associates — Client Portal Dashboard & Settings Routes
 
 Enables clients to view their dashboard, inspect their profile, change their password,
 and securely view, search, filter, preview, and download their approved documents.

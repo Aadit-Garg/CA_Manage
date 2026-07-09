@@ -1,1 +1,1 @@
-"""Sumit n Garg & Associates — Services Layer (Business Logic)"""
+"""Sumit N Garg & Associates — Services Layer (Business Logic)"""

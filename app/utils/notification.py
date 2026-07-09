@@ -61,7 +61,7 @@ def create_notification(user_id, message, link=None, title=None, category='syste
         
         # Prepare Push Payload
         payload = {
-            "title": title or "Sumit n Garg & Associates Notification",
+            "title": title or "Sumit N Garg & Associates Notification",
             "body": message,
             "url": link or "/"
         }

@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Model Exports
+Sumit N Garg & Associates — Model Exports
 
 Import all models here so that Flask-Migrate can discover them.
 """

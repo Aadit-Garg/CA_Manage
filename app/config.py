@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Configuration Classes
+Sumit N Garg & Associates — Configuration Classes
 
 Loads settings from environment variables with secure defaults.
 Three tiers: base Config, DevelopmentConfig, ProductionConfig.
@@ -53,7 +53,7 @@ class Config:
     CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
     # Application
-    APP_NAME = os.getenv('APP_NAME', 'Sumit n Garg & Associates')
+    APP_NAME = os.getenv('APP_NAME', 'Sumit N Garg & Associates')
     APP_DESCRIPTION = os.getenv('APP_DESCRIPTION', 'Client and Office Management Portal')
 
 

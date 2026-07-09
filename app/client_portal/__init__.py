@@ -1,4 +1,4 @@
-"""Sumit n Garg & Associates — Client Portal Blueprint"""
+"""Sumit N Garg & Associates — Client Portal Blueprint"""
 from flask import Blueprint
 
 client_bp = Blueprint('client_portal', __name__, template_folder='../templates/client')

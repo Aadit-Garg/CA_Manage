@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — User Model
+Sumit N Garg & Associates — User Model
 
 Unified user model for all three roles: admin, employee, client.
 Uses Werkzeug for secure password hashing.

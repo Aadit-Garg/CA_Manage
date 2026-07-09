@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Employee Management & Workspace Routes
+Sumit N Garg & Associates — Employee Management & Workspace Routes
 
 Enables employees to view assigned clients, browse active client contact cards,
 view client details, and manage document uploads through the approval request workflow.

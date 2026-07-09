@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Authentication Routes
+Sumit N Garg & Associates — Authentication Routes
 
 Login, logout, and password change with rate limiting and security logging.
 """

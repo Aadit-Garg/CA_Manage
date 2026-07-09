@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Authentication Forms
+Sumit N Garg & Associates — Authentication Forms
 
 WTForms for login and password change with CSRF protection.
 """

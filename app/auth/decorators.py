@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Role-Based Access Control Decorators
+Sumit N Garg & Associates — Role-Based Access Control Decorators
 
 Provides reusable decorators that enforce role checks on top of Flask-Login's
 @login_required. Stack these on any route that needs role protection.

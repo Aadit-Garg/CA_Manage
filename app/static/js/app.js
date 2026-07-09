@@ -1,5 +1,5 @@
 /**
- * Sumit n Garg & Associates — Application JavaScript
+ * Sumit N Garg & Associates — Application JavaScript
  * 
  * Service Worker registration, toast system, HTMX config,
  * and mobile UX enhancements.
@@ -13,7 +13,7 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker
             .register('/sw.js', { scope: '/' })
             .then((registration) => {
-                console.log('[Sumit n Garg & Associates] Service Worker registered:', registration.scope);
+                console.log('[Sumit N Garg & Associates] Service Worker registered:', registration.scope);
 
                 // Check for updates periodically
                 registration.addEventListener('updatefound', () => {
@@ -26,7 +26,7 @@ if ('serviceWorker' in navigator) {
                 });
             })
             .catch((err) => {
-                console.warn('[Sumit n Garg & Associates] Service Worker registration failed:', err);
+                console.warn('[Sumit N Garg & Associates] Service Worker registration failed:', err);
             });
     });
 }
@@ -358,7 +358,7 @@ function showMobilePWABanner() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const installText = isIOS 
         ? 'Tap <i class="bi bi-box-arrow-up"></i> then "Add to Home Screen"'
-        : 'Install Sumit n Garg & Associates for a better experience';
+        : 'Install Sumit N Garg & Associates for a better experience';
     const buttonText = isIOS ? 'Got it' : 'Install Now';
     const buttonAction = isIOS ? 'dismissMobilePWABanner()' : 'triggerPWAInstall()';
 
@@ -377,7 +377,7 @@ function showMobilePWABanner() {
                 <i class="bi bi-download text-white fs-5"></i>
             </div>
             <div class="flex-grow-1">
-                <strong class="d-block" style="font-size: 0.95rem;">Get the Sumit n Garg & Associates App</strong>
+                <strong class="d-block" style="font-size: 0.95rem;">Get the Sumit N Garg & Associates App</strong>
                 <small style="opacity: 0.8;">${installText}</small>
             </div>
             <div class="d-flex gap-2 flex-shrink-0">
@@ -427,7 +427,7 @@ function showPWAInstallModal() {
                     <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
                         <i class="bi bi-laptop fs-3"></i>
                     </div>
-                    <h5 class="fw-bold mb-2">Install Sumit n Garg & Associates</h5>
+                    <h5 class="fw-bold mb-2">Install Sumit N Garg & Associates</h5>
                     <p class="text-muted small px-2">Install our app on your computer or mobile device for a faster, full-screen experience and secure offline access.</p>
                     <div class="d-flex flex-column gap-2 mt-4">
                         <button class="btn btn-primary w-100 py-2 fw-medium btn-sm" onclick="triggerPWAInstall()">

@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Error Handlers
+Sumit N Garg & Associates — Error Handlers
 
 Custom error pages for common HTTP errors.
 Each renders a branded, mobile-friendly error page.

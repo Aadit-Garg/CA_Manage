@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Logging Utilities
+Sumit N Garg & Associates — Logging Utilities
 
 Helper functions for structured application logging.
 The main logging config is in app/__init__.py (configure_logging).

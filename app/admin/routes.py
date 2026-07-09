@@ -1,5 +1,5 @@
 """
-Sumit n Garg & Associates — Admin Dashboard & Management Routes
+Sumit N Garg & Associates — Admin Dashboard & Management Routes
 
 Provides summary statistics and administration endpoints for managing employees, clients,
 bulk Excel imports, document approvals, version history, and direct PDF upload/edit features.
