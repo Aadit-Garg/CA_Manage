@@ -1,5 +1,5 @@
 """
-CA Manage — Employee Management & Workspace Routes
+Sumit n Garg & Associates — Employee Management & Workspace Routes
 
 Enables employees to view assigned clients, browse active client contact cards,
 view client details, and manage document uploads through the approval request workflow.
@@ -148,26 +148,44 @@ def view_client(id):
 def download_document(id):
     """Proxied download route for employees."""
     doc = Document.query.get_or_404(id)
+    file_id = request.args.get('file_id', type=int)
+    
     if doc.password_protected:
         unlocked = session.get('unlocked_documents', [])
         if doc.id not in unlocked:
             return redirect(url_for('employee.password_change_request', id=doc.id))
 
     url = doc.cloudinary_url
+    if file_id:
+        doc_file = next((f for f in doc.files if f.id == file_id), None)
+        if doc_file:
+            url = doc_file.cloudinary_url
+    elif doc.files:
+        url = doc.files[0].cloudinary_url
+        
     url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
 
 @employee_bp.route('/documents/<int:id>/preview')
 @employee_required
 def preview_document(id):
-    """Proxied inline preview route for employees."""
+    """Proxied preview route for employees."""
     doc = Document.query.get_or_404(id)
+    file_id = request.args.get('file_id', type=int)
+    
     if doc.password_protected:
         unlocked = session.get('unlocked_documents', [])
         if doc.id not in unlocked:
             return redirect(url_for('employee.password_change_request', id=doc.id))
 
     url = doc.cloudinary_url
+    if file_id:
+        doc_file = next((f for f in doc.files if f.id == file_id), None)
+        if doc_file:
+            url = doc_file.cloudinary_url
+    elif doc.files:
+        url = doc.files[0].cloudinary_url
+        
     return redirect(url)
 
 
@@ -237,16 +255,15 @@ def upload_document():
         client = ClientProfile.query.get_or_404(client_id)
         
         # Verify file is uploaded
-        if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
-            flash('Please select a valid PDF file.', 'danger')
+        if not form.uploaded_files_data.data:
+            flash('Please select at least one valid PDF file.', 'danger')
             return render_template('employee/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
             
         try:
-            # Check for duplicate hashes in existing approved documents
-            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
-            if existing:
-                flash('This file has already been uploaded in the system.', 'warning')
-                return render_template('employee/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
+            import json
+            files_data = json.loads(form.uploaded_files_data.data)
+            if not files_data:
+                raise ValueError("No files uploaded")
 
             # Create document draft (approved=False)
             doc = Document(
@@ -256,11 +273,6 @@ def upload_document():
                 tags=form.tags.data.strip() if form.tags.data else None,
                 document_type=form.document_type.data,
                 financial_year=form.financial_year.data,
-                cloudinary_public_id=form.cloudinary_public_id.data,
-                cloudinary_url=form.cloudinary_url.data,
-                original_filename=form.original_filename.data,
-                file_size=int(form.file_size.data),
-                file_hash=None,
                 upload_version=1,
                 uploaded_by_id=current_user.id,
                 approved=False,
@@ -273,6 +285,19 @@ def upload_document():
                 
             db.session.add(doc)
             db.session.flush()
+            
+            from app.models.document_file import DocumentFile
+            for file_info in files_data:
+                doc_file = DocumentFile(
+                    document_id=doc.id,
+                    name=file_info.get('custom_name') or file_info.get('original_filename', 'Document'),
+                    cloudinary_public_id=file_info.get('cloudinary_public_id'),
+                    cloudinary_url=file_info.get('cloudinary_url', file_info.get('secure_url')),
+                    original_filename=file_info.get('original_filename'),
+                    file_size=int(file_info.get('file_size', file_info.get('bytes', 0))),
+                    file_hash=None
+                )
+                db.session.add(doc_file)
 
             # Create approval request
             req = ApprovalRequest(
@@ -284,7 +309,8 @@ def upload_document():
                     'tags': doc.tags,
                     'document_type': doc.document_type,
                     'financial_year': doc.financial_year,
-                    'password_protected': doc.password_protected
+                    'password_protected': doc.password_protected,
+                    'file_count': len(files_data)
                 }),
                 status='Pending'
             )

@@ -1,5 +1,5 @@
 """
-CA Manage — Authentication Routes
+Sumit n Garg & Associates — Authentication Routes
 
 Login, logout, and password change with rate limiting and security logging.
 """
@@ -37,7 +37,7 @@ def login():
                 return render_template('auth/login.html', form=form)
 
             if user.role == User.ROLE_CLIENT and user.client_profile and user.client_profile.expiration_date:
-                if user.client_profile.expiration_date < datetime.now(timezone.utc).date():
+                if user.client_profile.expiration_date <= datetime.now(timezone.utc).date():
                     flash('Your account login has expired. Please contact the administrator.', 'danger')
                     current_app.logger.warning(f'Login attempt for expired account: {user.email}')
                     log_user_action(current_app.logger, user, 'failed_login', module='auth', description='Account expired')
@@ -48,10 +48,7 @@ def login():
             user.last_login = datetime.now(timezone.utc)
             user.failed_login_attempts = 0  # Reset attempts on success
             db.session.commit()
-            
-            # Warn user if they are using a default password
-            if form.password.data in ['Admin@123', 'Employee@123', 'Client@123', 'admin@camanage.com']:
-                flash('Account at risk: You are using a default password. Please change it immediately.', 'danger')
+
 
             current_app.logger.info(f'User logged in: {user.email} [{user.role}]')
             log_user_action(current_app.logger, user, 'login', module='auth')

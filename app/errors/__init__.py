@@ -1,4 +1,4 @@
-"""CA Manage — Error Handlers Blueprint"""
+"""Sumit n Garg & Associates — Error Handlers Blueprint"""
 from flask import Blueprint
 
 errors_bp = Blueprint('errors', __name__)

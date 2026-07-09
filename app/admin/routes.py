@@ -1,5 +1,5 @@
 """
-CA Manage — Admin Dashboard & Management Routes
+Sumit n Garg & Associates — Admin Dashboard & Management Routes
 
 Provides summary statistics and administration endpoints for managing employees, clients,
 bulk Excel imports, document approvals, version history, and direct PDF upload/edit features.
@@ -748,17 +748,15 @@ def upload_document():
             
         client = ClientProfile.query.get_or_404(client_id)
         
-        if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
-            flash('Please upload a valid PDF file.', 'danger')
+        if not form.uploaded_files_data.data:
+            flash('Please upload at least one valid PDF file.', 'danger')
             return render_template('admin/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
             
         try:
-            # We don't have file hash anymore since it was uploaded directly
-            # We can use cloudinary_public_id for uniqueness check
-            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
-            if existing:
-                flash('This document has already been uploaded in the system.', 'warning')
-                return render_template('admin/documents/new.html', form=form, clients=client_choices, selected_client_id=selected_client_id)
+            import json
+            files_data = json.loads(form.uploaded_files_data.data)
+            if not files_data:
+                raise ValueError("No files uploaded")
 
             doc = Document(
                 client_id=client.id,
@@ -767,11 +765,6 @@ def upload_document():
                 tags=form.tags.data.strip() if form.tags.data else None,
                 document_type=form.document_type.data,
                 financial_year=form.financial_year.data,
-                cloudinary_public_id=form.cloudinary_public_id.data,
-                cloudinary_url=form.cloudinary_url.data,
-                original_filename=form.original_filename.data,
-                file_size=int(form.file_size.data),
-                file_hash=None, # File hash cannot be reliably calculated from client side securely without heavy JS
                 upload_version=1,
                 uploaded_by_id=current_user.id,
                 approved_by_id=current_user.id,
@@ -784,18 +777,33 @@ def upload_document():
                 doc.pdf_password = generate_password_hash(form.pdf_password.data)
                 
             db.session.add(doc)
+            db.session.flush() # Get doc.id
+            
+            from app.models.document_file import DocumentFile
+            for file_info in files_data:
+                doc_file = DocumentFile(
+                    document_id=doc.id,
+                    name=file_info.get('custom_name') or file_info.get('original_filename', 'Document'),
+                    cloudinary_public_id=file_info.get('cloudinary_public_id'),
+                    cloudinary_url=file_info.get('cloudinary_url', file_info.get('secure_url')),
+                    original_filename=file_info.get('original_filename'),
+                    file_size=int(file_info.get('file_size', file_info.get('bytes', 0))),
+                    file_hash=None
+                )
+                db.session.add(doc_file)
+            
             db.session.commit()
             
             create_timeline_event(
                 client_id=client.id,
                 event_type='Document Uploaded',
-                description=f'Document "{doc.title}" uploaded.',
+                description=f'Document "{doc.title}" uploaded with {len(files_data)} file(s).',
                 user_id=current_user.id,
                 document_id=doc.id
             )
             db.session.commit()
 
-            log_user_action(current_app.logger, current_user, 'create_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Uploaded document {doc.title}')
+            log_user_action(current_app.logger, current_user, 'create_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Uploaded document {doc.title} ({len(files_data)} files)')
             flash(f"Document '{doc.title}' uploaded and published successfully.", 'success')
             return redirect(url_for('admin.documents_list'))
             

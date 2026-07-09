@@ -1,5 +1,5 @@
 """
-CA Manage — Centralized Extension Instances
+Sumit n Garg & Associates — Centralized Extension Instances
 
 All Flask extensions are instantiated here without binding to an app.
 They are initialized with the app inside create_app() via init_app().

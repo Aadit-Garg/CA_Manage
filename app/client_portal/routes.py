@@ -1,5 +1,5 @@
 """
-CA Manage — Client Portal Dashboard & Settings Routes
+Sumit n Garg & Associates — Client Portal Dashboard & Settings Routes
 
 Enables clients to view their dashboard, inspect their profile, change their password,
 and securely view, search, filter, preview, and download their approved documents.
@@ -53,12 +53,20 @@ def dashboard():
         {'name': 'Other', 'icon': 'bi-folder2-open', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='Other').count(), 'color': 'secondary'},
     ]
 
+    from datetime import datetime, timezone
+    
+    days_until_expiry = None
+    if client_profile.expiration_date:
+        delta = client_profile.expiration_date - datetime.now(timezone.utc).date()
+        days_until_expiry = delta.days
+
     return render_template(
         'client/dashboard.html',
         stats=stats,
         categories=categories,
         profile=client_profile,
-        latest_uploads=latest_uploads
+        latest_uploads=latest_uploads,
+        days_until_expiry=days_until_expiry
     )
 
 
@@ -157,9 +165,15 @@ def unlock_document(id):
             
             # Check if requesting download or preview
             action = request.args.get('action', 'download')
+            file_id = request.args.get('file_id', type=int)
+            
+            url_kwargs = {'id': doc.id}
+            if file_id:
+                url_kwargs['file_id'] = file_id
+                
             if action == 'preview':
-                return redirect(url_for('client_portal.preview_document', id=doc.id))
-            return redirect(url_for('client_portal.download_document', id=doc.id))
+                return redirect(url_for('client_portal.preview_document', **url_kwargs))
+            return redirect(url_for('client_portal.download_document', **url_kwargs))
         else:
             flash('Incorrect document password.', 'danger')
 
@@ -173,12 +187,23 @@ def download_document(id):
     client_profile = current_user.client_profile
     doc = Document.query.filter_by(id=id, client_id=client_profile.id, approved=True, status='Active').first_or_404()
     
+    file_id = request.args.get('file_id', type=int)
+    
     if doc.password_protected:
         unlocked = session.get('unlocked_documents', [])
         if doc.id not in unlocked:
-            return redirect(url_for('client_portal.unlock_document', id=doc.id, action='download'))
+            url_kwargs = {'id': doc.id, 'action': 'download'}
+            if file_id: url_kwargs['file_id'] = file_id
+            return redirect(url_for('client_portal.unlock_document', **url_kwargs))
 
     url = doc.cloudinary_url
+    if file_id:
+        doc_file = next((f for f in doc.files if f.id == file_id), None)
+        if doc_file:
+            url = doc_file.cloudinary_url
+    elif doc.files:
+        url = doc.files[0].cloudinary_url
+        
     url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
 
@@ -190,10 +215,21 @@ def preview_document(id):
     client_profile = current_user.client_profile
     doc = Document.query.filter_by(id=id, client_id=client_profile.id, approved=True, status='Active').first_or_404()
     
+    file_id = request.args.get('file_id', type=int)
+    
     if doc.password_protected:
         unlocked = session.get('unlocked_documents', [])
         if doc.id not in unlocked:
-            return redirect(url_for('client_portal.unlock_document', id=doc.id, action='preview'))
+            url_kwargs = {'id': doc.id, 'action': 'preview'}
+            if file_id: url_kwargs['file_id'] = file_id
+            return redirect(url_for('client_portal.unlock_document', **url_kwargs))
 
     url = doc.cloudinary_url
+    if file_id:
+        doc_file = next((f for f in doc.files if f.id == file_id), None)
+        if doc_file:
+            url = doc_file.cloudinary_url
+    elif doc.files:
+        url = doc.files[0].cloudinary_url
+        
     return redirect(url)

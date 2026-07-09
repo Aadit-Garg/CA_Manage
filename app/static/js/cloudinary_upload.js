@@ -40,7 +40,8 @@ async function initCloudinaryUploads() {
             maxFileSize: 25000000, // 25MB
             sources: ['local', 'google_drive'],
             multiple: uploadBtn.dataset.multiple === 'true',
-            theme: 'minimal'
+            theme: 'minimal',
+            showCompletedButton: true
         }, (error, result) => {
             const isBulk = uploadBtn.dataset.multiple === 'true';
 

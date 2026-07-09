@@ -64,7 +64,7 @@ class ClientProfile(db.Model):
     def is_expired(self):
         """Check if the account login has expired."""
         if self.expiration_date:
-            return self.expiration_date < datetime.now(timezone.utc).date()
+            return self.expiration_date <= datetime.now(timezone.utc).date()
         return False
 
     @property

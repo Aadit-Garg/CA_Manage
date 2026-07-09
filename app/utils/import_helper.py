@@ -25,7 +25,7 @@ def generate_excel_template():
     ws_instr.views.sheetView[0].showGridLines = True
     
     # Title Block
-    ws_instr['A1'] = "CA Manage — Bulk Client Import Instructions"
+    ws_instr['A1'] = "Sumit n Garg & Associates — Bulk Client Import Instructions"
     ws_instr['A1'].font = Font(name="Calibri", size=16, bold=True, color="FFFFFF")
     ws_instr['A1'].fill = PatternFill(start_color="1B365D", end_color="1B365D", fill_type="solid")
     ws_instr.merge_cells("A1:D1")

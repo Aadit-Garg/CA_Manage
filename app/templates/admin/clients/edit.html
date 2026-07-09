@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Edit Client — Sumit N Garg Associates{% endblock %}
+{% block title %}Edit Client — Sumit n Garg & Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -156,7 +156,8 @@ function extendExpiration(days) {
     const dateInput = document.getElementById('expiration_date');
     let date;
     if (dateInput.value) {
-        date = new Date(dateInput.value);
+        const parts = dateInput.value.split('-');
+        date = new Date(parts[0], parts[1] - 1, parts[2]);
     } else {
         date = new Date();
     }

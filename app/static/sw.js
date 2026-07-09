@@ -1,5 +1,5 @@
 /**
- * CA Manage — Service Worker
+ * Sumit n Garg & Associates — Service Worker
  *
  * Cache-first for static assets, network-first for HTML pages.
  * Cache versioning via CACHE_VERSION for easy updates.
@@ -136,7 +136,7 @@ async function networkFirst(request) {
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>Offline — CA Manage</title>
+                    <title>Offline — Sumit n Garg & Associates</title>
                     <style>
                         body { font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f1f5f9; color: #1e293b; }
                         .offline { text-align: center; padding: 24px; }
@@ -174,7 +174,7 @@ function isStaticAsset(url) {
 // ── Web Push Notifications ──────────────────────────────────────
 self.addEventListener('push', function(event) {
     console.log('[Service Worker] Push Received.');
-    let data = { title: 'CA Manage', body: 'New notification', url: '/' };
+    let data = { title: 'Sumit n Garg & Associates', body: 'New notification', url: '/' };
     if (event.data) {
         try {
             data = event.data.json();

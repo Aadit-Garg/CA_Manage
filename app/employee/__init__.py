@@ -1,4 +1,4 @@
-"""CA Manage — Employee Blueprint"""
+"""Sumit n Garg & Associates — Employee Blueprint"""
 from flask import Blueprint
 
 employee_bp = Blueprint('employee', __name__, template_folder='../templates/employee')

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Bulk Upload PDFs — Sumit N Garg Associates{% endblock %}
+{% block title %}Bulk Upload PDFs — Sumit n Garg & Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4 d-flex justify-content-between align-items-center">
@@ -153,33 +153,14 @@
     let startTime = null;
     
     // DOM Elements
-    const fileInput = document.getElementById('file-input');
     const step1 = document.getElementById('step-1');
     const step2 = document.getElementById('step-2');
     const step3 = document.getElementById('step-3');
     const step4 = document.getElementById('step-4');
     const step5 = document.getElementById('step-5');
     
-    // Setup Drag & Drop
-    step1.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        step1.classList.add('border-primary', 'bg-light');
-    });
-    step1.addEventListener('dragleave', () => {
-        step1.classList.remove('border-primary', 'bg-light');
-    });
-    step1.addEventListener('drop', (e) => {
-        e.preventDefault();
-        step1.classList.remove('border-primary', 'bg-light');
-        if (e.dataTransfer.files.length > 0) {
-            handleFiles(e.dataTransfer.files);
-        }
-    });
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            handleFiles(fileInput.files);
-        }
-    });
+    // Setup Drag & Drop (Disabled for Cloudinary widget)
+    // Cloudinary widget handles drag and drop natively
     
     // Utilities
     async function hashFile(file) {
@@ -193,7 +174,6 @@
     function resetApp() {
         selectedFiles = [];
         reviewedFiles = [];
-        fileInput.value = '';
         showStep(1);
     }
     

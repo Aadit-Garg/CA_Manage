@@ -242,10 +242,7 @@ class DocumentUploadForm(FlaskForm):
         ('2026-27', '2026-27')
     ], default='2025-26', render_kw={'class': 'form-select'})
     
-    cloudinary_url = HiddenField('Cloudinary URL', validators=[DataRequired(message="Please upload a document.")])
-    cloudinary_public_id = HiddenField('Cloudinary Public ID', validators=[DataRequired()])
-    original_filename = HiddenField('Original Filename', validators=[DataRequired()])
-    file_size = HiddenField('File Size', validators=[DataRequired()])
+    uploaded_files_data = HiddenField('Uploaded Files JSON', validators=[DataRequired(message="Please upload at least one document.")])
     
     tags = StringField('Tags', validators=[
         Optional(),

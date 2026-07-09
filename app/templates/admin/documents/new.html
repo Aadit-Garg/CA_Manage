@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Upload Document — Sumit N Garg Associates{% endblock %}
+{% block title %}Upload Document — Sumit n Garg & Associates{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -71,20 +71,23 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold text-dark small">Upload PDF File</label>
                             
-                            {{ form.cloudinary_url }}
-                            {{ form.cloudinary_public_id }}
-                            {{ form.original_filename }}
-                            {{ form.file_size }}
+                            {{ form.uploaded_files_data(id="uploaded_files_data") }}
                             
-                            <div>
-                                <button id="cloudinary-upload-btn" class="btn btn-outline-primary" data-multiple="false">
-                                    <i class="bi bi-cloud-arrow-up me-2"></i>Select File to Upload
+                            <div class="mb-3">
+                                <button type="button" id="cloudinary-upload-btn" class="btn btn-outline-primary" data-multiple="true">
+                                    <i class="bi bi-cloud-arrow-up me-2"></i>Select PDF Files
                                 </button>
+                                <small class="text-muted d-block mt-2">Files are uploaded directly to secure storage. You can select multiple files.</small>
                             </div>
-                            {% for error in form.cloudinary_url.errors %}
+                            {% for error in form.uploaded_files_data.errors %}
                                 <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
                             {% endfor %}
-                            <small class="text-muted d-block mt-2">Files are uploaded directly to secure storage (bypass size limits).</small>
+
+                            <!-- Dynamic File Naming Section -->
+                            <div id="file-names-container" class="d-none">
+                                <label class="form-label fw-semibold text-dark small mt-2">Rename Uploaded Files (Optional)</label>
+                                <div id="file-names-list" class="d-flex flex-column gap-2"></div>
+                            </div>
                         </div>
 
                         <div class="col-12 border-top pt-3 mt-3">
@@ -123,5 +126,43 @@
             pwSection.classList.add('d-none');
         }
     });
+
+    // Handle Cloudinary multiple uploads
+    window.startBulkAnalysis = function(data) {
+        if (!data || data.length === 0) return;
+        
+        const container = document.getElementById('file-names-container');
+        const list = document.getElementById('file-names-list');
+        list.innerHTML = '';
+        
+        data.forEach((file, index) => {
+            const defaultName = file.original_filename.replace('.pdf', '');
+            
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center gap-2';
+            row.innerHTML = `
+                <i class="bi bi-file-earmark-pdf text-danger fs-5"></i>
+                <input type="text" class="form-control form-control-sm file-name-input" 
+                       data-index="${index}" value="${defaultName}" 
+                       placeholder="e.g. Computation">
+            `;
+            list.appendChild(row);
+        });
+        
+        container.classList.remove('d-none');
+        
+        // Listen for name changes and update the hidden JSON
+        const updateHiddenData = () => {
+            const inputs = list.querySelectorAll('.file-name-input');
+            inputs.forEach(input => {
+                const idx = input.getAttribute('data-index');
+                data[idx].custom_name = input.value;
+            });
+            document.getElementById('uploaded_files_data').value = JSON.stringify(data);
+        };
+        
+        list.addEventListener('input', updateHiddenData);
+        updateHiddenData(); // initial sync
+    };
 </script>
 {% endblock %}

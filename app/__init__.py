@@ -1,5 +1,5 @@
 """
-CA Manage — Application Factory
+Sumit n Garg & Associates — Application Factory
 
 Creates and configures the Flask application.
 Registers all extensions, blueprints, error handlers, and shell context.
@@ -115,7 +115,7 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_globals():
         return {
-            'app_name': app.config.get('APP_NAME', 'Sumit N Garg Associates'),
+            'app_name': app.config.get('APP_NAME', 'Sumit n Garg & Associates'),
             'app_description': app.config.get('APP_DESCRIPTION', ''),
         }
 
@@ -163,7 +163,7 @@ def configure_logging(app):
 
     # Skip file logging on Vercel (read-only file system)
     if os.environ.get('VERCEL') == '1':
-        app.logger.info('CA Manage application started (Vercel Mode - Stream Logging Only)')
+        app.logger.info('Sumit n Garg & Associates application started (Vercel Mode - Stream Logging Only)')
         return
 
     try:
@@ -187,4 +187,4 @@ def configure_logging(app):
     except Exception as e:
         app.logger.warning(f'Could not configure file logging: {e}')
 
-    app.logger.info('CA Manage application started')
+    app.logger.info('Sumit n Garg & Associates application started')

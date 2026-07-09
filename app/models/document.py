@@ -16,13 +16,13 @@ class Document(db.Model):
     document_type = db.Column(db.String(100), nullable=False, index=True) # e.g. GST Return, Income Tax Return
     financial_year = db.Column(db.String(20), nullable=False, index=True) # e.g. 2025-26
     
-    # Cloudinary storage links
-    cloudinary_public_id = db.Column(db.String(255), nullable=False)
-    cloudinary_url = db.Column(db.String(255), nullable=False)
+    # Cloudinary storage links (Legacy - migrated to DocumentFile)
+    cloudinary_public_id = db.Column(db.String(255), nullable=True)
+    cloudinary_url = db.Column(db.String(255), nullable=True)
     
-    # Metadata
-    original_filename = db.Column(db.String(255), nullable=False)
-    file_size = db.Column(db.Integer, nullable=False) # In bytes
+    # Metadata (Legacy - migrated to DocumentFile)
+    original_filename = db.Column(db.String(255), nullable=True)
+    file_size = db.Column(db.Integer, nullable=True) # In bytes
     file_hash = db.Column(db.String(64), nullable=True, index=True) # SHA-256 integrity check
     upload_version = db.Column(db.Integer, default=1, nullable=False)
     

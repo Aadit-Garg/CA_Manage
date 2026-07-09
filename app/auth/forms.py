@@ -1,5 +1,5 @@
 """
-CA Manage — Authentication Forms
+Sumit n Garg & Associates — Authentication Forms
 
 WTForms for login and password change with CSRF protection.
 """
