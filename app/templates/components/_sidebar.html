@@ -30,6 +30,9 @@
     <a href="{{ url_for('client_portal.documents_list') }}" class="ca-nav-item {% if request.endpoint == 'client_portal.documents_list' %}active{% endif %}">
         <i class="bi bi-folder2-open"></i> Documents
     </a>
+    <a href="{{ url_for('client_portal.invoices') }}" class="ca-nav-item {% if request.endpoint == 'client_portal.invoices' %}active{% endif %}">
+        <i class="bi bi-receipt"></i> Invoices
+    </a>
     {% endif %}
 
     {% if current_user.role == 'admin' %}
@@ -68,7 +71,7 @@
     <a href="#" class="ca-nav-item">
         <i class="bi bi-list-task"></i> Tasks & Returns
     </a>
-    <a href="#" class="ca-nav-item">
+    <a href="{{ url_for('invoice.dashboard') }}" class="ca-nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('invoice.') }}">
         <i class="bi bi-receipt"></i> Invoices
     </a>
     {% endif %}

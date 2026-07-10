@@ -233,3 +233,34 @@ def preview_document(id):
         url = doc.files[0].cloudinary_url
         
     return redirect(url)
+
+
+# ── Invoices ──────────────────────────────────────────────────────────
+
+@client_bp.route('/invoices')
+@client_required
+def invoices():
+    """List all non-draft invoices for the client."""
+    from app.models.invoice import Invoice
+    
+    invoices = Invoice.query.filter(
+        Invoice.client_id == current_user.client_profile.id,
+        Invoice.status != 'Draft'
+    ).order_by(Invoice.created_at.desc()).all()
+    
+    return render_template('client/invoices.html', invoices=invoices)
+
+@client_bp.route('/invoice/<int:id>')
+@client_required
+def view_invoice(id):
+    """View a specific invoice if it belongs to the client."""
+    from app.models.invoice import Invoice
+    
+    invoice = Invoice.query.get_or_404(id)
+    
+    # Ensure client only sees their own non-draft invoices
+    if invoice.client_id != current_user.client_profile.id or invoice.status == 'Draft':
+        flash('Invoice not found or unauthorized.', 'error')
+        return redirect(url_for('client_portal.invoices'))
+        
+    return render_template('invoice/invoice_print.html', invoice=invoice)

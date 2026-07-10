@@ -60,6 +60,7 @@ def create_app(config_name=None):
     from .client_portal import client_bp
     from .errors import errors_bp
     from .api import api_bp
+    from .invoice import invoice_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(admin_bp, url_prefix='/admin')
@@ -72,6 +73,7 @@ def create_app(config_name=None):
 
     app.register_blueprint(employee_bp, url_prefix='/employee')
     app.register_blueprint(client_bp, url_prefix='/client')
+    app.register_blueprint(invoice_bp, url_prefix='/invoice')
     app.register_blueprint(api_bp)
     app.register_blueprint(errors_bp)
 

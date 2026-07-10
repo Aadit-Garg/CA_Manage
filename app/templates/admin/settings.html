@@ -37,6 +37,46 @@
 
                 <hr class="my-4">
                 
+                <h5 class="fw-bold mb-3">Invoice Defaults</h5>
+                <p class="text-muted small mb-4">These details will automatically pre-fill when generating new invoices.</p>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Firm Address</label>
+                        <textarea name="firm_address" class="form-control bg-light" rows="3" placeholder="123 CA Street, City, State">{{ settings.firm_address or '' }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">GSTIN</label>
+                        <input type="text" name="gstin" class="form-control bg-light" value="{{ settings.gstin or '' }}" placeholder="22AAAAA0000A1Z5">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Bank Name</label>
+                        <input type="text" name="bank_name" class="form-control bg-light" value="{{ settings.bank_name or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Bank Account Name</label>
+                        <input type="text" name="bank_account_name" class="form-control bg-light" value="{{ settings.bank_account_name or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Account Number</label>
+                        <input type="text" name="account_number" class="form-control bg-light" value="{{ settings.account_number or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">IFSC Code</label>
+                        <input type="text" name="ifsc_code" class="form-control bg-light" value="{{ settings.ifsc_code or '' }}">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Default Invoice Notes (Terms & Conditions)</label>
+                    <textarea name="default_notes" class="form-control bg-light" rows="3" placeholder="Thank you for your business. Payment is due within 15 days.">{{ settings.default_notes or '' }}</textarea>
+                </div>
+
+                <hr class="my-4">
+                
                 <div class="text-end">
                     <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
                         <i class="bi bi-save me-2"></i>Save Settings

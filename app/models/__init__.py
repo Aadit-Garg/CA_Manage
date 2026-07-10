@@ -18,9 +18,11 @@ from .push_subscription import PushSubscription
 from .audit import AuditLog
 from .saved_filter import SavedFilter
 from .settings import FirmSettings
+from .invoice import Invoice, InvoiceItem
 
 __all__ = [
     'User', 'ClientProfile', 'Employee', 
     'Document', 'DocumentVersion', 'ApprovalRequest', 'UploadSession', 'UploadSessionFile',
-    'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription', 'AuditLog', 'SavedFilter', 'FirmSettings'
+    'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription', 'AuditLog', 'SavedFilter', 'FirmSettings',
+    'Invoice', 'InvoiceItem'
 ]

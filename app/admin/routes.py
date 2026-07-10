@@ -74,6 +74,14 @@ def settings():
         if firm_name:
             firm_settings.firm_name = firm_name.strip()
             
+        firm_settings.firm_address = request.form.get('firm_address', '').strip()
+        firm_settings.gstin = request.form.get('gstin', '').strip()
+        firm_settings.bank_account_name = request.form.get('bank_account_name', '').strip()
+        firm_settings.bank_name = request.form.get('bank_name', '').strip()
+        firm_settings.account_number = request.form.get('account_number', '').strip()
+        firm_settings.ifsc_code = request.form.get('ifsc_code', '').strip()
+        firm_settings.default_notes = request.form.get('default_notes', '').strip()
+            
         logo = request.files.get('logo')
         if logo and logo.filename:
             # Save logo locally to static/images/logo.png
@@ -1183,54 +1191,4 @@ def review_approval(id):
             
     return render_template('admin/approvals/review.html', req=req, prev=prev, proposed=proposed)
 
-@admin_bp.route('/launch-invoicing')
-@admin_required
-def launch_invoicing():
-    from itsdangerous import URLSafeTimedSerializer
-    import os
-    secret = os.environ.get('INVOICE_APP_SECRET')
-    if not secret:
-        flash('Invoice app secret not configured.', 'error')
-        return redirect(url_for('admin.dashboard'))
-    serializer = URLSafeTimedSerializer(secret)
-    # API key generation (in this case, just pass a fixed API key or generate one)
-    # We'll use a fixed API key stored in .env for simplicity, or we can use the same INVOICE_APP_SECRET as the API key.
-    token_data = {
-        'admin_id': current_user.id,
-        'admin_email': current_user.email,
-        'api_url': request.url_root.rstrip('/') + url_for('admin.export_clients_api'),
-        'api_key': secret
-    }
-    token = serializer.dumps(token_data)
-    invoice_url = os.environ.get('INVOICE_APP_URL', 'http://localhost:5001')
-    return redirect(f'{invoice_url}/auth/sso?token={token}')
 
-@admin_bp.route('/api/export-clients', methods=['GET'])
-def export_clients_api():
-    from flask import jsonify, request
-    import os
-    api_key = request.args.get('api_key')
-    expected_key = os.environ.get('INVOICE_APP_SECRET')
-    if not expected_key or api_key != expected_key:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    clients = ClientProfile.query.all()
-    client_data = []
-    for c in clients:
-        client_data.append({
-            'id': c.id,
-            'name': c.firm_name or c.full_name,
-            'email': c.email,
-            'address': f'{c.address}, {c.city}, {c.state} - {c.pincode}',
-            'gstin': getattr(c, 'GST', getattr(c, 'gstin', None)),
-            'pan': getattr(c, 'PAN', getattr(c, 'pan', None))
-        })
-        
-    from ..models.settings import FirmSettings
-    settings = FirmSettings.get_settings()
-    settings_data = {
-        'firm_name': settings.firm_name,
-        'logo_url': request.host_url.rstrip('/') + settings.logo_url if settings.logo_url else None
-    }
-    
-    return jsonify({'status': 'success', 'clients': client_data, 'settings': settings_data})

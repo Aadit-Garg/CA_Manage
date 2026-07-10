@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}My Invoices — Client Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">My Invoices</h3>
+        <p class="text-muted small mb-0">View and download your billing invoices</p>
+    </div>
+</div>
+
+<div class="ca-card border-0 shadow-sm bg-white mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Invoice No.</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ inv.invoice_number }}</td>
+                    <td>{{ inv.issue_date.strftime('%b %d, %Y') }}</td>
+                    <td>
+                        {% if inv.due_date %}
+                            {{ inv.due_date.strftime('%b %d, %Y') }}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if inv.status == 'Draft' %}bg-secondary
+                            {% elif inv.status == 'Unpaid' %}bg-warning text-dark
+                            {% elif inv.status == 'Paid' %}bg-success
+                            {% elif inv.status == 'Overdue' %}bg-danger
+                            {% else %}bg-primary{% endif %}">
+                            {{ inv.status }}
+                        </span>
+                    </td>
+                    <td class="fw-semibold">₹{{ "%.2f"|format(inv.total_amount) }}</td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ url_for('client_portal.view_invoice', id=inv.id) }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="View/Print" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No invoices available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

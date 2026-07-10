@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Invoice #{{ invoice.invoice_number }} — CA Invoice{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Invoice Details</h3>
+        <p class="text-muted small mb-0">{{ invoice.invoice_number }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('invoice.invoices') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        <a href="{{ url_for('invoice.print_invoice', id=invoice.id) }}" target="_blank" class="btn btn-primary">
+            <i class="bi bi-printer me-2"></i>Print / Save PDF
+        </a>
+    </div>
+</div>
+
+<div class="ca-card border-0 shadow-sm bg-white p-5 max-w-4xl mx-auto" style="max-width: 900px;">
+    <!-- Preview Header -->
+    <div class="row mb-5 border-bottom pb-4">
+        <div class="col-sm-6">
+            <img src="{{ firm_settings.logo_url }}" alt="Logo" style="max-height: 80px; margin-bottom: 1rem;">
+            <h4 class="fw-bold text-dark">{{ invoice.firm_name or (firm_settings.firm_name or 'Firm Name') }}</h4>
+            <p class="text-muted mb-1">{{ invoice.firm_address or (firm_settings.firm_address or 'Firm Address') }}</p>
+            {% if firm_settings.gstin %}
+            <p class="text-muted small mb-0"><strong>GSTIN:</strong> {{ firm_settings.gstin }}</p>
+            {% endif %}
+        </div>
+        <div class="col-sm-6 text-end">
+            <h3 class="fw-bold text-dark mb-3">INVOICE</h3>
+            <p class="mb-1 text-muted"><strong>Invoice No:</strong> <span class="text-dark">{{ invoice.invoice_number }}</span></p>
+            <p class="mb-1 text-muted"><strong>Issue Date:</strong> <span class="text-dark">{{ invoice.issue_date.strftime('%d %b %Y') }}</span></p>
+            {% if invoice.due_date %}
+            <p class="mb-1 text-muted"><strong>Due Date:</strong> <span class="text-dark">{{ invoice.due_date.strftime('%d %b %Y') }}</span></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Client Info -->
+    <div class="row mb-5 bg-light p-4 rounded mx-0">
+        <div class="col-sm-12">
+            <h6 class="text-uppercase fw-bold text-muted mb-3" style="letter-spacing: 1px;">Bill To:</h6>
+            <h5 class="fw-bold mb-2">{{ (invoice.client.firm_name or invoice.client.full_name) or ((invoice.client.firm_name or invoice.client.full_name) if invoice.client else 'Unknown Client') }}</h5>
+            <p class="text-muted mb-1">{{ invoice.client_address or (invoice.client.address if invoice.client else '') }}</p>
+            {% if invoice.client.GST or (invoice.client and invoice.client.GST) %}
+            <p class="text-muted small mb-0 mt-2"><strong>GSTIN:</strong> {{ invoice.client.GST or invoice.client.GST }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 50%;">Description of Service</th>
+                    <th style="width: 20%;">SAC Code</th>
+                    <th style="width: 30%; text-align: right;">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.sac_code or '-' }}</td>
+                    <td class="text-end">₹{{ "%.2f"|format(item.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="row justify-content-end mb-5">
+        <div class="col-sm-6 col-md-5">
+            <table class="table table-sm table-borderless">
+                <tr>
+                    <td class="fw-semibold text-muted">Subtotal:</td>
+                    <td class="text-end fw-semibold">₹{{ "%.2f"|format(invoice.subtotal) }}</td>
+                </tr>
+                {% if invoice.tax_type == 'IGST' %}
+                <tr>
+                    <td class="fw-semibold text-muted">IGST ({{ invoice.igst_rate }}%):</td>
+                    <td class="text-end text-muted">₹{{ "%.2f"|format(invoice.total_tax) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="fw-semibold text-muted">CGST ({{ invoice.cgst_rate }}%):</td>
+                    <td class="text-end text-muted">₹{{ "%.2f"|format(invoice.subtotal * invoice.cgst_rate / 100) }}</td>
+                </tr>
+                <tr>
+                    <td class="fw-semibold text-muted">SGST ({{ invoice.sgst_rate }}%):</td>
+                    <td class="text-end text-muted">₹{{ "%.2f"|format(invoice.subtotal * invoice.sgst_rate / 100) }}</td>
+                </tr>
+                {% endif %}
+                <tr class="border-top border-dark">
+                    <td class="fw-bold fs-5 pt-2">Total:</td>
+                    <td class="text-end fw-bold fs-5 pt-2 text-primary">₹{{ "%.2f"|format(invoice.total_amount) }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bank Details & Notes -->
+    <div class="row">
+        {% if firm_settings.account_number %}
+        <div class="col-md-6 mb-4 mb-md-0">
+            <h6 class="text-uppercase text-muted fw-bold small mb-2 border-bottom pb-2">Bank Details</h6>
+            <p class="small mb-1"><strong>Account Name:</strong> {{ invoice.bank_account_name or firm_settings.bank_account_name }}</p>
+            <p class="small mb-1"><strong>Bank:</strong> {{ invoice.bank_name or firm_settings.bank_name }}</p>
+            <p class="small mb-1"><strong>A/C No:</strong> {{ invoice.account_number or firm_settings.account_number }}</p>
+            <p class="small mb-1"><strong>IFSC:</strong> {{ invoice.ifsc_code or firm_settings.ifsc_code }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="col-md-6">
+            <h6 class="text-uppercase text-muted fw-bold small mb-2 border-bottom pb-2">Terms & Notes</h6>
+            <p class="small text-muted" style="white-space: pre-wrap;">{{ invoice.notes }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

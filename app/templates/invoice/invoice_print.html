@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - {{ invoice.invoice_number }}</title>
+    <!-- Use minimal styling, directly importing bootstrap and print specific css -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: white;
+            color: #333;
+            font-size: 14px;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+        }
+        @media print {
+            body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; color-adjust: exact; }
+            .invoice-box { border: none; padding: 0; box-shadow: none; margin: 0; width: 100%; max-width: none; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="text-center mt-3 no-print">
+        <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+        <button class="btn btn-secondary ms-2" onclick="window.close()">Close</button>
+    </div>
+
+    <div class="invoice-box mt-4">
+        <!-- Header -->
+        <!-- Header info -->
+        <div class="row mb-5 border-bottom pb-4 border-2 border-dark">
+            <div class="col-6">
+                <!-- User requested image top left -->
+                <img src="{{ firm_settings.logo_url }}" alt="Logo" style="max-height: 80px; margin-bottom: 1rem;">
+                <h4 class="fw-bold mb-1" style="color: #1a365d;">{{ invoice.firm_name or (firm_settings.firm_name or 'Firm Name') }}</h4>
+                <p class="mb-1">{{ invoice.firm_address or (firm_settings.firm_address or 'Firm Address') }}</p>
+                {% if firm_settings.gstin %}
+                <p class="mb-0"><strong>GSTIN:</strong> {{ firm_settings.gstin }}</p>
+                {% endif %}
+            </div>
+            <div class="col-6 text-end">
+                <h2 class="fw-bold mb-3" style="color: #1a365d;">INVOICE</h2>
+                <div class="d-inline-block text-start">
+                    <p class="mb-1"><strong>Invoice No:</strong> <span class="fs-5">{{ invoice.invoice_number }}</span></p>
+                    <p class="mb-1"><strong>Issue Date:</strong> {{ invoice.issue_date.strftime('%d %b %Y') }}</p>
+                    {% if invoice.due_date %}
+                    <p class="mb-1"><strong>Due Date:</strong> {{ invoice.due_date.strftime('%d %b %Y') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing info -->
+        <div class="row mb-5 bg-light p-4 rounded mx-0">
+            <div class="col-12">
+                <h6 class="text-uppercase fw-bold text-muted mb-3" style="letter-spacing: 1px;">Bill To:</h6>
+                <h5 class="fw-bold mb-2">{{ (invoice.client.firm_name or invoice.client.full_name) or ((invoice.client.firm_name or invoice.client.full_name) if invoice.client else 'Unknown Client') }}</h5>
+                <p class="mb-1">{{ invoice.client_address or (invoice.client.address if invoice.client else '') }}</p>
+                {% if invoice.client.GST or (invoice.client and invoice.client.GST) %}
+                <p class="mb-0 mt-2"><strong>GSTIN:</strong> {{ invoice.client.GST or invoice.client.GST }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Items -->
+        <table class="table table-bordered border-dark mb-4">
+            <thead class="table-light border-dark">
+                <tr>
+                    <th style="width: 50%;">Description of Service</th>
+                    <th style="width: 20%;" class="text-center">SAC Code</th>
+                    <th style="width: 30%;" class="text-end">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody class="border-dark">
+                {% for item in invoice.items %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td class="text-center">{{ item.sac_code or '-' }}</td>
+                    <td class="text-end">₹{{ "%.2f"|format(item.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="row justify-content-end mb-5">
+            <div class="col-6">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="fw-semibold">Subtotal:</td>
+                        <td class="text-end fw-semibold">₹{{ "%.2f"|format(invoice.subtotal) }}</td>
+                    </tr>
+                    {% if invoice.tax_type == 'IGST' %}
+                    <tr>
+                        <td class="fw-semibold">IGST ({{ invoice.igst_rate }}%):</td>
+                        <td class="text-end">₹{{ "%.2f"|format(invoice.total_tax) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td class="fw-semibold">CGST ({{ invoice.cgst_rate }}%):</td>
+                        <td class="text-end">₹{{ "%.2f"|format(invoice.subtotal * invoice.cgst_rate / 100) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">SGST ({{ invoice.sgst_rate }}%):</td>
+                        <td class="text-end">₹{{ "%.2f"|format(invoice.subtotal * invoice.sgst_rate / 100) }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="border-top border-dark border-2">
+                        <td class="fw-bold fs-5 pt-2" style="color: #1a365d;">Grand Total:</td>
+                        <td class="text-end fw-bold fs-5 pt-2" style="color: #1a365d;">₹{{ "%.2f"|format(invoice.total_amount) }}</td>
+                    </tr>
+                </table>
+                <div class="text-end mt-4">
+                    <p class="mb-4 text-muted small">(Authorized Signatory)</p>
+                    <div style="width: 150px; border-bottom: 1px solid #000; margin-left: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Details & Notes -->
+        <div class="row mt-5 pt-3 border-top border-dark">
+            {% if firm_settings.account_number %}
+            <div class="col-6">
+                <h6 class="text-uppercase fw-bold small mb-2" style="color: #1a365d;">Payment Details</h6>
+                <p class="small mb-1"><strong>Account Name:</strong> {{ invoice.bank_account_name or firm_settings.bank_account_name }}</p>
+                <p class="small mb-1"><strong>Bank:</strong> {{ invoice.bank_name or firm_settings.bank_name }}</p>
+                <p class="small mb-1"><strong>A/C No:</strong> {{ invoice.account_number or firm_settings.account_number }}</p>
+                <p class="small mb-1"><strong>IFSC:</strong> {{ invoice.ifsc_code or firm_settings.ifsc_code }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="col-6">
+                <h6 class="text-uppercase fw-bold small mb-2" style="color: #1a365d;">Terms & Conditions</h6>
+                <p class="small text-muted" style="white-space: pre-wrap;">{{ invoice.notes }}</p>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5 pt-4 border-top">
+            <p class="small text-muted mb-0">This is a computer generated invoice and does not require a physical signature unless mandated.</p>
+        </div>
+    </div>
+</body>
+</html>
