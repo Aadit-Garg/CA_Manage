@@ -43,13 +43,15 @@ def dashboard():
         status='Active'
     ).order_by(Document.created_at.desc()).limit(5).all()
 
+    from app.models.invoice import Invoice
+    
     # Document categories
     categories = [
         {'name': 'Income Tax Return', 'icon': 'bi-file-earmark-text', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='Income Tax Return').count(), 'color': 'primary'},
         {'name': 'GST Return', 'icon': 'bi-receipt', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='GST Return').count(), 'color': 'success'},
         {'name': 'Audit Report', 'icon': 'bi-clipboard-check', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='Audit Report').count(), 'color': 'info'},
         {'name': 'Balance Sheet', 'icon': 'bi-graph-up', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='Balance Sheet').count(), 'color': 'warning'},
-        {'name': 'Invoices', 'icon': 'bi-file-earmark-ruled', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='Invoice').count(), 'color': 'danger'},
+        {'name': 'Invoices', 'icon': 'bi-file-earmark-ruled', 'count': Invoice.query.filter(Invoice.client_id == client_profile.id, Invoice.status != 'Draft').count(), 'color': 'danger'},
         {'name': 'Other', 'icon': 'bi-folder2-open', 'count': Document.query.filter_by(client_id=client_profile.id, approved=True, status='Active', document_type='Other').count(), 'color': 'secondary'},
     ]
 
