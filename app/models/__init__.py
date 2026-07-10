@@ -17,9 +17,10 @@ from .notification import Notification
 from .push_subscription import PushSubscription
 from .audit import AuditLog
 from .saved_filter import SavedFilter
+from .settings import FirmSettings
 
 __all__ = [
     'User', 'ClientProfile', 'Employee', 
     'Document', 'DocumentVersion', 'ApprovalRequest', 'UploadSession', 'UploadSessionFile',
-    'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription', 'AuditLog', 'SavedFilter'
+    'Attendance', 'TimelineEvent', 'Notification', 'PushSubscription', 'AuditLog', 'SavedFilter', 'FirmSettings'
 ]

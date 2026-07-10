@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Login — Sumit N Garg & Associates{% endblock %}
+{% block title %}Login — {{ firm_settings.firm_name }}{% endblock %}
 
 {% block auth_content %}
 <div class="ca-login-wrapper">
     <div class="ca-login-box">
         <div class="text-center mb-4">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Sumit N Garg & Associates Logo" style="height: 64px; width: auto; margin-bottom: 1rem;">
-            <h2 class="fw-bold mt-2 mb-1">Sumit N Garg & Associates</h2>
+            <img src="{{ firm_settings.logo_url }}" alt="{{ firm_settings.firm_name }} Logo" style="height: 64px; width: auto; margin-bottom: 1rem;">
+            <h2 class="fw-bold mt-2 mb-1">{{ firm_settings.firm_name }}</h2>
             <p class="text-muted small">Sign in to your account</p>
         </div>
 

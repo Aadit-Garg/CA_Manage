@@ -63,6 +63,13 @@ def create_app(config_name=None):
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+
+    # Global Context Processor for Firm Settings
+    @app.context_processor
+    def inject_firm_settings():
+        from app.models.settings import FirmSettings
+        return dict(firm_settings=FirmSettings.get_settings())
+
     app.register_blueprint(employee_bp, url_prefix='/employee')
     app.register_blueprint(client_bp, url_prefix='/client')
     app.register_blueprint(api_bp)

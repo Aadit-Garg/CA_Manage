@@ -60,6 +60,35 @@ def dashboard():
     )
 
 
+# ── Firm Settings ─────────────────────────────────────────────────────
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+@admin_required
+def settings():
+    from ..models.settings import FirmSettings
+    import os
+    
+    firm_settings = FirmSettings.get_settings()
+    
+    if request.method == 'POST':
+        firm_name = request.form.get('firm_name')
+        if firm_name:
+            firm_settings.firm_name = firm_name.strip()
+            
+        logo = request.files.get('logo')
+        if logo and logo.filename:
+            # Save logo locally to static/images/logo.png
+            upload_folder = os.path.join(current_app.root_path, 'static', 'images')
+            os.makedirs(upload_folder, exist_ok=True)
+            logo_path = os.path.join(upload_folder, 'logo.png')
+            logo.save(logo_path)
+            firm_settings.logo_url = '/static/images/logo.png'
+            
+        db.session.commit()
+        flash('Firm settings updated successfully.', 'success')
+        return redirect(url_for('admin.settings'))
+        
+    return render_template('admin/settings.html', settings=firm_settings)
+
 # ── System Admin Management ───────────────────────────────────────────
 @admin_bp.route('/system-admins')
 @admin_required
@@ -1153,3 +1182,55 @@ def review_approval(id):
             return redirect(url_for('admin.approvals_list'))
             
     return render_template('admin/approvals/review.html', req=req, prev=prev, proposed=proposed)
+
+@admin_bp.route('/launch-invoicing')
+@admin_required
+def launch_invoicing():
+    from itsdangerous import URLSafeTimedSerializer
+    import os
+    secret = os.environ.get('INVOICE_APP_SECRET')
+    if not secret:
+        flash('Invoice app secret not configured.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    serializer = URLSafeTimedSerializer(secret)
+    # API key generation (in this case, just pass a fixed API key or generate one)
+    # We'll use a fixed API key stored in .env for simplicity, or we can use the same INVOICE_APP_SECRET as the API key.
+    token_data = {
+        'admin_id': current_user.id,
+        'admin_email': current_user.email,
+        'api_url': request.url_root.rstrip('/') + url_for('admin.export_clients_api'),
+        'api_key': secret
+    }
+    token = serializer.dumps(token_data)
+    invoice_url = os.environ.get('INVOICE_APP_URL', 'http://localhost:5001')
+    return redirect(f'{invoice_url}/auth/sso?token={token}')
+
+@admin_bp.route('/api/export-clients', methods=['GET'])
+def export_clients_api():
+    from flask import jsonify, request
+    import os
+    api_key = request.args.get('api_key')
+    expected_key = os.environ.get('INVOICE_APP_SECRET')
+    if not expected_key or api_key != expected_key:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    clients = ClientProfile.query.all()
+    client_data = []
+    for c in clients:
+        client_data.append({
+            'id': c.id,
+            'name': c.firm_name or c.full_name,
+            'email': c.email,
+            'address': f'{c.address}, {c.city}, {c.state} - {c.pincode}',
+            'gstin': getattr(c, 'GST', getattr(c, 'gstin', None)),
+            'pan': getattr(c, 'PAN', getattr(c, 'pan', None))
+        })
+        
+    from ..models.settings import FirmSettings
+    settings = FirmSettings.get_settings()
+    settings_data = {
+        'firm_name': settings.firm_name,
+        'logo_url': request.host_url.rstrip('/') + settings.logo_url if settings.logo_url else None
+    }
+    
+    return jsonify({'status': 'success', 'clients': client_data, 'settings': settings_data})

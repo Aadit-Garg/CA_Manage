@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Firm Settings — CA Manage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Firm Settings</h3>
+        <p class="text-muted small mb-0">White-label your practice management software</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="ca-card border-0 shadow-sm bg-white p-4">
+            <form method="POST" enctype="multipart/form-data">
+                
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Firm Name</label>
+                    <input type="text" name="firm_name" class="form-control bg-light" value="{{ settings.firm_name }}" required>
+                    <div class="form-text">This name will appear on the dashboard, navbar, and in the Invoice app.</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Firm Logo</label>
+                    <div class="d-flex align-items-center gap-4 mb-3">
+                        {% if settings.logo_url %}
+                        <div class="bg-light p-2 rounded border text-center" style="width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
+                            <img src="{{ settings.logo_url }}" alt="Current Logo" style="max-width: 100%; max-height: 100%;">
+                        </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <input type="file" name="logo" class="form-control bg-light" accept="image/png, image/jpeg, image/jpg">
+                            <div class="form-text mt-2">Recommended size: 200x200px. Upload a PNG or JPG to override the current logo.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                        <i class="bi bi-save me-2"></i>Save Settings
+                    </button>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 <a href="{{ url_for('index') }}" class="ca-brand" style="font-size: 1.1rem;">
-    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 32px; width: auto;">
-    Sumit N Garg & Associates
+    <img src="{{ firm_settings.logo_url }}" alt="Logo" style="height: 32px; width: auto;">
+    {{ firm_settings.firm_name }}
 </a>
 
 <div class="ca-nav-menu">
@@ -57,6 +57,9 @@
     </a>
     <a href="{{ url_for('admin.audit_logs') }}" class="ca-nav-item {% if request.endpoint == 'admin.audit_logs' %}active{% endif %}">
         <i class="bi bi-journal-code"></i> Audit Logs
+    </a>
+    <a href="{{ url_for('admin.settings') }}" class="ca-nav-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+        <i class="bi bi-gear"></i> Firm Settings
     </a>
     {% endif %}
 
