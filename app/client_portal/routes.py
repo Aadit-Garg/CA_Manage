@@ -116,12 +116,13 @@ def documents_list():
     if financial_year:
         query = query.filter(Document.financial_year == financial_year)
     if search:
-        query = query.filter(
+        from app.models.document_file import DocumentFile
+        query = query.outerjoin(DocumentFile).filter(
             db.or_(
                 Document.title.ilike(f'%{search}%'),
                 Document.description.ilike(f'%{search}%'),
                 Document.tags.ilike(f'%{search}%'),
-                Document.original_filename.ilike(f'%{search}%')
+                DocumentFile.original_filename.ilike(f'%{search}%')
             )
         )
 
@@ -191,6 +192,9 @@ def download_document(id):
     
     file_id = request.args.get('file_id', type=int)
     
+    if len(doc.files) > 1 and not file_id:
+        return redirect(url_for('client_portal.view_document', id=doc.id))
+        
     if doc.password_protected:
         unlocked = session.get('unlocked_documents', [])
         if doc.id not in unlocked:
@@ -209,6 +213,21 @@ def download_document(id):
     url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
 
+
+@client_bp.route('/documents/<int:id>/view')
+@client_required
+def view_document(id):
+    """View document details and attached files."""
+    client_profile = current_user.client_profile
+    doc = Document.query.filter_by(id=id, client_id=client_profile.id, approved=True, status='Active').first_or_404()
+    
+    # Check if there is only 1 file and it's not password protected? 
+    # Actually, if there is only 1 file, we can redirect directly to preview to save a click
+    # BUT if they need to unlock it, the preview route handles unlocking anyway.
+    if len(doc.files) == 1:
+        return redirect(url_for('client_portal.preview_document', id=doc.id))
+        
+    return render_template('client/documents/view.html', document=doc)
 
 @client_bp.route('/documents/<int:id>/preview')
 @client_required

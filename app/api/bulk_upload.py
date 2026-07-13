@@ -6,6 +6,7 @@ from ..models.client import ClientProfile
 from ..models.document import Document
 from ..models.approval import ApprovalRequest
 from ..models.upload_session import UploadSession, UploadSessionFile
+from ..models.document_file import DocumentFile
 from ..utils.cloudinary_helper import upload_pdf
 from . import api_bp
 from functools import wraps
@@ -39,7 +40,7 @@ def analyze_bulk_upload():
             upload_id_map[c.upload_id.lower()] = c
 
     # Also build a set of existing file hashes/names for duplicate detection
-    existing_docs = Document.query.with_entities(Document.file_hash, Document.original_filename).all()
+    existing_docs = DocumentFile.query.with_entities(DocumentFile.file_hash, DocumentFile.original_filename).all()
     existing_hashes = {d[0] for d in existing_docs if d[0]}
     existing_filenames = {d[1].lower() for d in existing_docs if d[1]}
     
@@ -148,11 +149,13 @@ def process_bulk_upload():
     upload_session = UploadSession.query.get(session_id) if session_id else None
 
     # Check duplicate action based on cloudinary_public_id or original_filename
-    existing_doc = None
+    existing_file = None
     if cloudinary_public_id:
-        existing_doc = Document.query.filter_by(client_id=client_id, cloudinary_public_id=cloudinary_public_id, status='Active').first()
-    if not existing_doc and original_filename:
-        existing_doc = Document.query.filter_by(client_id=client_id, original_filename=original_filename, status='Active').first()
+        existing_file = DocumentFile.query.join(Document).filter(Document.client_id == client_id, Document.status == 'Active', DocumentFile.cloudinary_public_id == cloudinary_public_id).first()
+    if not existing_file and original_filename:
+        existing_file = DocumentFile.query.join(Document).filter(Document.client_id == client_id, Document.status == 'Active', DocumentFile.original_filename == original_filename).first()
+        
+    existing_doc = existing_file.document if existing_file else None
         
     if existing_doc and duplicate_action == 'skip':
         return jsonify({'status': 'skipped', 'message': 'Skipped duplicate'})
@@ -162,28 +165,27 @@ def process_bulk_upload():
         
         if not is_admin and existing_doc and duplicate_action == 'replace':
             # Employee replacing creates approval request
-            doc = Document(
-                client_id=client_id,
-                title=original_filename.replace('.pdf', '') if original_filename else 'Document',
-                document_type=doc_type,
-                financial_year=fy,
-                cloudinary_public_id=cloudinary_public_id,
-                cloudinary_url=cloudinary_url,
-                original_filename=original_filename,
-                file_size=file_size,
-                file_hash=None,
-                uploaded_by_id=current_user.id,
-                approved=False,
-                status='Pending Replace'
-            )
-            db.session.add(doc)
-            db.session.flush()
-            
+            import json
             req = ApprovalRequest(
-                document_id=doc.id,
-                requested_by_id=current_user.id,
+                employee_id=current_user.id,
+                document_id=existing_doc.id,
                 request_type='Replace',
-                original_document_id=existing_doc.id
+                previous_values=json.dumps({
+                    'file_id': existing_file.id,
+                    'cloudinary_public_id': existing_file.cloudinary_public_id,
+                    'cloudinary_url': existing_file.cloudinary_url,
+                    'original_filename': existing_file.original_filename,
+                    'file_size': existing_file.file_size
+                }),
+                proposed_values=json.dumps({
+                    'file_id': existing_file.id,
+                    'cloudinary_public_id': cloudinary_public_id,
+                    'cloudinary_url': cloudinary_url,
+                    'original_filename': original_filename,
+                    'file_size': file_size,
+                    'file_hash': None
+                }),
+                status='Pending'
             )
             db.session.add(req)
             db.session.commit()
@@ -203,22 +205,37 @@ def process_bulk_upload():
                 title=original_filename.replace('.pdf', '') if original_filename else 'Document',
                 document_type=doc_type,
                 financial_year=fy,
-                cloudinary_public_id=cloudinary_public_id,
-                cloudinary_url=cloudinary_url,
-                original_filename=original_filename,
-                file_size=file_size,
-                file_hash=None,
+                upload_version=1,
                 uploaded_by_id=current_user.id,
                 approved=False,
-                status='Pending'
+                status='Active'
             )
             db.session.add(doc)
             db.session.flush()
             
-            req = ApprovalRequest(
+            doc_file = DocumentFile(
                 document_id=doc.id,
-                requested_by_id=current_user.id,
-                request_type='Upload'
+                name=original_filename.replace('.pdf', '') if original_filename else 'Document',
+                cloudinary_public_id=cloudinary_public_id,
+                cloudinary_url=cloudinary_url,
+                original_filename=original_filename,
+                file_size=file_size,
+                file_hash=None
+            )
+            db.session.add(doc_file)
+            
+            import json
+            req = ApprovalRequest(
+                employee_id=current_user.id,
+                document_id=doc.id,
+                request_type='Upload',
+                proposed_values=json.dumps({
+                    'title': doc.title,
+                    'document_type': doc.document_type,
+                    'financial_year': doc.financial_year,
+                    'file_count': 1
+                }),
+                status='Pending'
             )
             db.session.add(req)
             db.session.commit()
@@ -235,24 +252,11 @@ def process_bulk_upload():
             # Admin upload/replace directly active
             if existing_doc and duplicate_action == 'replace':
                 # Archive existing
-                history = DocumentVersion(
-                    document_id=existing_doc.id,
-                    version_number=existing_doc.upload_version,
-                    cloudinary_public_id=existing_doc.cloudinary_public_id,
-                    cloudinary_url=existing_doc.cloudinary_url,
-                    original_filename=existing_doc.original_filename,
-                    file_size=existing_doc.file_size,
-                    file_hash=existing_doc.file_hash,
-                    uploaded_by_id=existing_doc.uploaded_by_id
-                )
-                db.session.add(history)
-                
-                existing_doc.cloudinary_public_id = cloudinary_public_id
-                existing_doc.cloudinary_url = cloudinary_url
-                existing_doc.original_filename = original_filename
-                existing_doc.file_size = file_size
-                existing_doc.file_hash = None
-                existing_doc.uploaded_by_id = current_user.id
+                existing_file.cloudinary_public_id = cloudinary_public_id
+                existing_file.cloudinary_url = cloudinary_url
+                existing_file.original_filename = original_filename
+                existing_file.file_size = file_size
+                existing_file.file_hash = None
                 existing_doc.upload_version += 1
                 db.session.commit()
                 
@@ -271,11 +275,6 @@ def process_bulk_upload():
                     title=original_filename.replace('.pdf', '') if original_filename else 'Document',
                     document_type=doc_type,
                     financial_year=fy,
-                    cloudinary_public_id=cloudinary_public_id,
-                    cloudinary_url=cloudinary_url,
-                    original_filename=original_filename,
-                    file_size=file_size,
-                    file_hash=None,
                     upload_version=1,
                     uploaded_by_id=current_user.id,
                     approved_by_id=current_user.id,
@@ -283,6 +282,18 @@ def process_bulk_upload():
                     status='Active'
                 )
                 db.session.add(doc)
+                db.session.flush()
+                
+                doc_file = DocumentFile(
+                    document_id=doc.id,
+                    name=original_filename.replace('.pdf', '') if original_filename else 'Document',
+                    cloudinary_public_id=cloudinary_public_id,
+                    cloudinary_url=cloudinary_url,
+                    original_filename=original_filename,
+                    file_size=file_size,
+                    file_hash=None
+                )
+                db.session.add(doc_file)
                 db.session.commit()
                 
                 if upload_session:

@@ -49,8 +49,8 @@
                         {% for doc in latest_uploads %}
                         <tr>
                             <td class="ps-4 fw-medium">
-                                <a href="{{ url_for('client_portal.preview_document', id=doc.id) }}" class="text-decoration-none text-dark" target="_blank">
-                                    <i class="bi bi-file-earmark-pdf text-danger me-2"></i>{{ doc.original_filename }}
+                                <a href="{{ url_for('client_portal.view_document', id=doc.id) }}" class="text-decoration-none text-dark">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-2"></i>{{ doc.title }}
                                 </a>
                                 {% if doc.password_protected %}
                                     <i class="bi bi-lock-fill text-warning ms-1" title="Password Protected" style="font-size: 0.75rem;"></i>
@@ -59,8 +59,8 @@
                             <td class="small">{{ doc.document_type }}</td>
                             <td class="text-muted small">{{ doc.created_at|ist('%b %d, %Y') }}</td>
                             <td class="pe-4 text-end">
-                                <a href="{{ url_for('client_portal.download_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-0" title="Download" data-turbo="false">
-                                    <i class="bi bi-download"></i>
+                                <a href="{{ url_for('client_portal.view_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-0" title="View" data-turbo="false">
+                                    <i class="bi bi-eye"></i>
                                 </a>
                             </td>
                         </tr>

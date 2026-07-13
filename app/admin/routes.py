@@ -737,11 +737,12 @@ def documents_list():
     if financial_year:
         query = query.filter(Document.financial_year == financial_year)
     if search:
-        query = query.join(ClientProfile).filter(
+        from app.models.document_file import DocumentFile
+        query = query.join(ClientProfile).outerjoin(DocumentFile).filter(
             db.or_(
                 Document.title.ilike(f'%{search}%'),
                 Document.tags.ilike(f'%{search}%'),
-                Document.original_filename.ilike(f'%{search}%'),
+                DocumentFile.original_filename.ilike(f'%{search}%'),
                 ClientProfile.full_name.ilike(f'%{search}%'),
                 ClientProfile.client_code.ilike(f'%{search}%')
             )
@@ -894,61 +895,89 @@ def replace_document(id):
     """Directly replace a production PDF, preserving older version in history."""
     doc = Document.query.get_or_404(id)
     form = DocumentReplaceForm()
+    
+    file_id = request.args.get('file_id', type=int)
+    target_file = None
+    if file_id:
+        target_file = next((f for f in doc.files if f.id == file_id), None)
+        if not target_file:
+            flash('Target file not found in this document.', 'danger')
+            return redirect(url_for('admin.edit_document', id=doc.id))
 
     if form.validate_on_submit():
         if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
             flash('Please upload a replacement file first.', 'danger')
-            return render_template('admin/documents/replace.html', form=form, document=doc)
+            return render_template('admin/documents/replace.html', form=form, document=doc, file_id=file_id)
             
         try:
-            # Duplicate check
-            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
-            if existing:
-                flash('This file matches an existing document.', 'warning')
-                return render_template('admin/documents/replace.html', form=form, document=doc)
-
-            # Archive current values
-            history = DocumentVersion(
-                document_id=doc.id,
-                version_number=doc.upload_version,
-                cloudinary_public_id=doc.cloudinary_public_id,
-                cloudinary_url=doc.cloudinary_url,
-                original_filename=doc.original_filename,
-                file_size=doc.file_size,
-                file_hash=doc.file_hash,
-                uploaded_by_id=doc.uploaded_by_id
-            )
-            db.session.add(history)
-
-            # Update Document with new file details
-            doc.cloudinary_public_id = form.cloudinary_public_id.data
-            doc.cloudinary_url = form.cloudinary_url.data
-            doc.original_filename = form.original_filename.data
-            doc.file_size = int(form.file_size.data)
-            doc.file_hash = None
-            doc.uploaded_by_id = current_user.id
-            doc.upload_version += 1
-            
-            db.session.commit()
-            
-            create_timeline_event(
-                client_id=doc.client_id,
-                event_type='Document Replaced',
-                description=f'Document replaced with v{doc.upload_version}.',
-                user_id=current_user.id,
-                document_id=doc.id
-            )
-            db.session.commit()
-            
-            log_user_action(logger, current_user, 'replace_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Replaced document {doc.title}')
-            
-            flash(f"Document replaced successfully. Now at version {doc.upload_version}.", 'success')
-            return redirect(url_for('admin.documents_list'))
+            if target_file:
+                # Replace specific file
+                target_file.cloudinary_public_id = form.cloudinary_public_id.data
+                target_file.cloudinary_url = form.cloudinary_url.data
+                target_file.original_filename = form.original_filename.data
+                target_file.file_size = int(form.file_size.data)
+                target_file.file_hash = None
+                doc.upload_version += 1
+                db.session.commit()
+                
+                create_timeline_event(
+                    client_id=doc.client_id,
+                    event_type='Document File Replaced',
+                    description=f'File "{target_file.name}" in document "{doc.title}" replaced.',
+                    user_id=current_user.id,
+                    document_id=doc.id
+                )
+                from flask import current_app
+                log_user_action(current_app.logger, current_user, 'replace_document_file', module='documents', entity_type='Document', entity_id=doc.id, description=f'Replaced file {target_file.name} in document {doc.title}')
+                
+                flash(f"File '{target_file.name}' replaced successfully.", 'success')
+                return redirect(url_for('admin.edit_document', id=doc.id))
+            else:
+                # Legacy full-document replace
+                existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
+                if existing:
+                    flash('This file matches an existing document.', 'warning')
+                    return render_template('admin/documents/replace.html', form=form, document=doc)
+    
+                history = DocumentVersion(
+                    document_id=doc.id,
+                    version_number=doc.upload_version,
+                    cloudinary_public_id=doc.cloudinary_public_id,
+                    cloudinary_url=doc.cloudinary_url,
+                    original_filename=doc.original_filename,
+                    file_size=doc.file_size,
+                    file_hash=doc.file_hash,
+                    uploaded_by_id=doc.uploaded_by_id
+                )
+                db.session.add(history)
+    
+                doc.cloudinary_public_id = form.cloudinary_public_id.data
+                doc.cloudinary_url = form.cloudinary_url.data
+                doc.original_filename = form.original_filename.data
+                doc.file_size = int(form.file_size.data)
+                doc.file_hash = None
+                doc.uploaded_by_id = current_user.id
+                doc.upload_version += 1
+                
+                db.session.commit()
+                
+                create_timeline_event(
+                    client_id=doc.client_id,
+                    event_type='Document Replaced',
+                    description=f'Document replaced with v{doc.upload_version}.',
+                    user_id=current_user.id,
+                    document_id=doc.id
+                )
+                from flask import current_app
+                log_user_action(current_app.logger, current_user, 'replace_document', module='documents', entity_type='Document', entity_id=doc.id, description=f'Replaced document {doc.title}')
+                
+                flash(f"Document replaced successfully. Now at version {doc.upload_version}.", 'success')
+                return redirect(url_for('admin.documents_list'))
             
         except Exception as e:
             flash(f"Replacement failed: {str(e)}", 'danger')
 
-    return render_template('admin/documents/replace.html', form=form, document=doc)
+    return render_template('admin/documents/replace.html', form=form, document=doc, file_id=file_id)
 
 
 @admin_bp.route('/documents/<int:id>/delete', methods=['POST'])
@@ -978,9 +1007,33 @@ def delete_document(id):
 def download_document(id):
     """Proxied download route for admin."""
     doc = Document.query.get_or_404(id)
+    
+    file_id = request.args.get('file_id', type=int)
+    if len(doc.files) > 1 and not file_id:
+        return redirect(url_for('admin.view_document', id=doc.id))
+        
     url = doc.cloudinary_url
+    if file_id:
+        doc_file = next((f for f in doc.files if f.id == file_id), None)
+        if doc_file:
+            url = doc_file.cloudinary_url
+    elif doc.files:
+        url = doc.files[0].cloudinary_url
+        
+    if not url or url == 'None':
+        flash('No file attached to this document.', 'danger')
+        return redirect(url_for('admin.documents_list'))
+        
     url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
+
+
+@admin_bp.route('/documents/<int:id>/view')
+@admin_required
+def view_document(id):
+    """View details and list all files for a multi-PDF document."""
+    doc = Document.query.get_or_404(id)
+    return render_template('admin/documents/view.html', document=doc)
 
 
 @admin_bp.route('/documents/<int:id>/preview')
@@ -988,7 +1041,23 @@ def download_document(id):
 def preview_document(id):
     """Proxied inline preview route for admin."""
     doc = Document.query.get_or_404(id)
+    
+    file_id = request.args.get('file_id', type=int)
+    if len(doc.files) > 1 and not file_id:
+        return redirect(url_for('admin.view_document', id=doc.id))
+        
     url = doc.cloudinary_url
+    if file_id:
+        doc_file = next((f for f in doc.files if f.id == file_id), None)
+        if doc_file:
+            url = doc_file.cloudinary_url
+    elif doc.files:
+        url = doc.files[0].cloudinary_url
+        
+    if not url or url == 'None':
+        flash('No file attached to this document.', 'danger')
+        return redirect(url_for('admin.documents_list'))
+        
     return redirect(url)
 
 
@@ -1093,26 +1162,16 @@ def review_approval(id):
                 doc.approved_by_id = current_user.id
                 
             elif req.request_type == 'Replace':
-                # Archive current doc state into history version
-                history = DocumentVersion(
-                    document_id=doc.id,
-                    version_number=doc.upload_version,
-                    cloudinary_public_id=doc.cloudinary_public_id,
-                    cloudinary_url=doc.cloudinary_url,
-                    original_filename=doc.original_filename,
-                    file_size=doc.file_size,
-                    file_hash=doc.file_hash,
-                    uploaded_by_id=doc.uploaded_by_id
-                )
-                db.session.add(history)
-                
-                # Apply replacement file details
-                doc.cloudinary_public_id = proposed['cloudinary_public_id']
-                doc.cloudinary_url = proposed['cloudinary_url']
-                doc.original_filename = proposed['original_filename']
-                doc.file_size = proposed['file_size']
-                doc.file_hash = proposed['file_hash']
-                doc.uploaded_by_id = req.employee_id
+                from app.models.document_file import DocumentFile
+                file_id = proposed.get('file_id')
+                if file_id:
+                    target_file = DocumentFile.query.get(file_id)
+                    if target_file:
+                        target_file.cloudinary_public_id = proposed['cloudinary_public_id']
+                        target_file.cloudinary_url = proposed['cloudinary_url']
+                        target_file.original_filename = proposed['original_filename']
+                        target_file.file_size = proposed['file_size']
+                        target_file.file_hash = proposed['file_hash']
                 doc.upload_version += 1
                 
             elif req.request_type == 'Metadata Edit':

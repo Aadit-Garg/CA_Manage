@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ document.title }} — Client Portal{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('client_portal.documents_list') }}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Documents
+    </a>
+    <h3 class="fw-bold mt-2 mb-1 text-dark">{{ document.title }}</h3>
+    <p class="text-muted small mb-0">
+        <span class="badge bg-light text-dark border me-2">{{ document.document_type }}</span>
+        <span class="badge bg-light text-dark border me-2">FY: {{ document.financial_year }}</span>
+        Uploaded on {{ document.created_at|ist('%d %b %Y') }}
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="ca-card mb-4">
+            <div class="ca-card-header d-flex justify-content-between align-items-center">
+                <span>Attached Files</span>
+                <span class="badge bg-primary rounded-pill">{{ document.files|length }} Files</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for file in document.files %}
+                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-light p-2 rounded text-danger">
+                            <i class="bi bi-file-earmark-pdf fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-semibold text-dark">{{ file.name }}</h6>
+                            <small class="text-muted">{{ ((file.file_size or 0) / 1024 / 1024)|round(2) }} MB</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('client_portal.preview_document', id=document.id, file_id=file.id) }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                            <i class="bi bi-eye me-1"></i>Preview
+                        </a>
+                        <a href="{{ url_for('client_portal.download_document', id=document.id, file_id=file.id) }}" class="btn btn-sm btn-primary" data-turbo="false">
+                            <i class="bi bi-download me-1"></i>Download
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="list-group-item text-center py-4 text-muted small">
+                    No files attached to this document.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if document.description %}
+        <div class="ca-card mb-4">
+            <div class="ca-card-header">Description</div>
+            <div class="ca-card-body">
+                <p class="small text-muted mb-0" style="white-space: pre-wrap;">{{ document.description }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if document.tags %}
+        <div class="ca-card">
+            <div class="ca-card-header">Tags</div>
+            <div class="ca-card-body">
+                {% for tag in document.tags.split(',') %}
+                    <span class="badge bg-light text-secondary border fw-normal mb-1">{{ tag.strip() }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

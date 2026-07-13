@@ -71,8 +71,8 @@
                                         <td><strong>Draft File Upload</strong></td>
                                         <td>—</td>
                                         <td>
-                                            <a href="{{ req.document.cloudinary_url }}" target="_blank" class="small text-decoration-none"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>{{ req.document.original_filename }}</a>
-                                            <span class="text-muted small d-block">({{ (req.document.file_size / 1024 / 1024) | round(2) }} MB)</span>
+                                            <a href="{{ url_for('admin.view_document', id=req.document.id) }}" target="_blank" class="small text-decoration-none"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>{{ req.document.title }}</a>
+                                            <span class="text-muted small d-block">({{ ((req.document.file_size or 0) / 1024 / 1024) | round(2) }} MB)</span>
                                         </td>
                                     </tr>
 
@@ -144,10 +144,10 @@
                         </div>
                         <div class="border rounded p-3 mb-2">
                             <small class="text-muted d-block">Draft File</small>
-                            <a href="{{ req.document.cloudinary_url }}" target="_blank" class="text-decoration-none">
-                                <i class="bi bi-file-earmark-pdf me-1 text-danger"></i>{{ req.document.original_filename }}
+                            <a href="{{ url_for('admin.view_document', id=req.document.id) }}" target="_blank" class="text-decoration-none">
+                                <i class="bi bi-file-earmark-pdf me-1 text-danger"></i>{{ req.document.title }}
                             </a>
-                            <span class="text-muted small d-block">({{ (req.document.file_size / 1024 / 1024) | round(2) }} MB)</span>
+                            <span class="text-muted small d-block">({{ ((req.document.file_size or 0) / 1024 / 1024) | round(2) }} MB)</span>
                         </div>
 
                     {% elif req.request_type == 'Replace' %}

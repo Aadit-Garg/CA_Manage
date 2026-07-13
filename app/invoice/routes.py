@@ -124,13 +124,17 @@ def new_invoice():
 @login_required
 def view_invoice(id):
     invoice = Invoice.query.get_or_404(id)
-    return render_template('invoice/invoice_view.html', invoice=invoice)
+    from app.models.settings import FirmSettings
+    firm_settings = FirmSettings.get_settings()
+    return render_template('invoice/invoice_view.html', invoice=invoice, firm_settings=firm_settings)
 
 @invoice_bp.route('/<int:id>/print')
 @login_required
 def print_invoice(id):
     invoice = Invoice.query.get_or_404(id)
-    return render_template('invoice/invoice_print.html', invoice=invoice)
+    from app.models.settings import FirmSettings
+    firm_settings = FirmSettings.get_settings()
+    return render_template('invoice/invoice_print.html', invoice=invoice, firm_settings=firm_settings)
 
 @invoice_bp.route('/<int:id>/share', methods=['POST'])
 @login_required

@@ -154,6 +154,9 @@ def download_document(id):
         unlocked = session.get('unlocked_documents', [])
         if doc.id not in unlocked:
             return redirect(url_for('employee.password_change_request', id=doc.id))
+            
+    if len(doc.files) > 1 and not file_id:
+        return redirect(url_for('employee.view_document', id=doc.id))
 
     url = doc.cloudinary_url
     if file_id:
@@ -163,8 +166,23 @@ def download_document(id):
     elif doc.files:
         url = doc.files[0].cloudinary_url
         
+    if not url or url == 'None':
+        flash('No file attached to this document.', 'danger')
+        return redirect(url_for('employee.documents_list'))
+        
     url = url.replace('/upload/', '/upload/fl_attachment/')
     return redirect(url)
+
+@employee_bp.route('/documents/<int:id>/view')
+@employee_required
+def view_document(id):
+    """View details and list all files for a multi-PDF document."""
+    doc = Document.query.get_or_404(id)
+    if doc.password_protected:
+        unlocked = session.get('unlocked_documents', [])
+        if doc.id not in unlocked:
+            return redirect(url_for('employee.password_change_request', id=doc.id))
+    return render_template('employee/documents/view.html', document=doc)
 
 @employee_bp.route('/documents/<int:id>/preview')
 @employee_required
@@ -178,6 +196,9 @@ def preview_document(id):
         if doc.id not in unlocked:
             return redirect(url_for('employee.password_change_request', id=doc.id))
 
+    if len(doc.files) > 1 and not file_id:
+        return redirect(url_for('employee.view_document', id=doc.id))
+
     url = doc.cloudinary_url
     if file_id:
         doc_file = next((f for f in doc.files if f.id == file_id), None)
@@ -185,6 +206,10 @@ def preview_document(id):
             url = doc_file.cloudinary_url
     elif doc.files:
         url = doc.files[0].cloudinary_url
+        
+    if not url or url == 'None':
+        flash('No file attached to this document.', 'danger')
+        return redirect(url_for('employee.documents_list'))
         
     return redirect(url)
 
@@ -206,11 +231,13 @@ def documents_list():
     if financial_year:
         query = query.filter(Document.financial_year == financial_year)
     if search:
-        query = query.join(ClientProfile).filter(
+        from app.models.document_file import DocumentFile
+        query = query.join(ClientProfile).outerjoin(DocumentFile).filter(
             db.or_(
                 Document.title.ilike(f'%{search}%'),
                 Document.tags.ilike(f'%{search}%'),
                 Document.document_type.ilike(f'%{search}%'),
+                DocumentFile.original_filename.ilike(f'%{search}%'),
                 ClientProfile.full_name.ilike(f'%{search}%'),
                 ClientProfile.client_code.ilike(f'%{search}%')
             )
@@ -352,19 +379,27 @@ def bulk_upload():
 def replace_document(id):
     """Request replacement of a production PDF."""
     doc = Document.query.get_or_404(id)
+    file_id = request.args.get('file_id', type=int)
+    if not file_id:
+        flash('Please select a specific file to replace.', 'warning')
+        return redirect(url_for('employee.edit_document', id=doc.id))
+        
+    from app.models.document_file import DocumentFile
+    target_file = DocumentFile.query.filter_by(id=file_id, document_id=doc.id).first_or_404()
+    
     form = DocumentReplaceForm()
 
     if form.validate_on_submit():
         if not form.cloudinary_url.data or not form.cloudinary_public_id.data:
             flash('Please upload a replacement file first.', 'danger')
-            return render_template('employee/documents/replace.html', form=form, document=doc)
+            return render_template('employee/documents/replace.html', form=form, document=doc, file=target_file)
             
         try:
             # Check duplicates
-            existing = Document.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data, status='Active').first()
+            existing = DocumentFile.query.filter_by(cloudinary_public_id=form.cloudinary_public_id.data).first()
             if existing:
                 flash('This file matches an existing document.', 'warning')
-                return render_template('employee/documents/replace.html', form=form, document=doc)
+                return render_template('employee/documents/replace.html', form=form, document=doc, file=target_file)
 
             # Create pending Replace request
             req = ApprovalRequest(
@@ -372,13 +407,15 @@ def replace_document(id):
                 document_id=doc.id,
                 request_type='Replace',
                 previous_values=json.dumps({
-                    'cloudinary_public_id': doc.cloudinary_public_id,
-                    'cloudinary_url': doc.cloudinary_url,
-                    'original_filename': doc.original_filename,
-                    'file_size': doc.file_size,
-                    'file_hash': doc.file_hash
+                    'file_id': target_file.id,
+                    'cloudinary_public_id': target_file.cloudinary_public_id,
+                    'cloudinary_url': target_file.cloudinary_url,
+                    'original_filename': target_file.original_filename,
+                    'file_size': target_file.file_size,
+                    'file_hash': target_file.file_hash
                 }),
                 proposed_values=json.dumps({
+                    'file_id': target_file.id,
                     'cloudinary_public_id': form.cloudinary_public_id.data,
                     'cloudinary_url': form.cloudinary_url.data,
                     'original_filename': form.original_filename.data,
@@ -407,7 +444,7 @@ def replace_document(id):
         except Exception as e:
             flash(f"Replacement request failed: {str(e)}", 'danger')
 
-    return render_template('employee/documents/replace.html', form=form, document=doc)
+    return render_template('employee/documents/replace.html', form=form, document=doc, file=target_file)
 
 
 @employee_bp.route('/documents/<int:id>/edit', methods=['GET', 'POST'])

@@ -90,27 +90,12 @@
                         <td>{{ doc.document_type }}</td>
                         <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">FY {{ doc.financial_year }}</span></td>
                         <td class="text-muted small">{{ doc.created_at|ist('%b %d, %Y') }}</td>
-                        <td class="text-muted small">{{ (doc.file_size / 1024 / 1024) | round(2) }} MB</td>
+                        <td class="text-muted small">{{ ((doc.file_size or 0) / 1024 / 1024) | round(2) }} MB</td>
                         <td class="pe-4 text-end">
                             {% if doc.files and doc.files|length > 1 %}
-                                <div class="dropdown d-inline-block">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle py-1 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-files me-1"></i>View Files ({{ doc.files|length }})
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                                        {% for file in doc.files %}
-                                        <li>
-                                            <div class="dropdown-item d-flex justify-content-between align-items-center gap-3">
-                                                <span class="text-truncate" style="max-width: 200px;" title="{{ file.name }}">{{ file.name }}</span>
-                                                <div class="d-flex gap-1">
-                                                    <a href="{{ url_for('client_portal.preview_document', id=doc.id, file_id=file.id) }}" class="btn btn-sm btn-light py-0 px-2" target="_blank" title="Preview"><i class="bi bi-eye"></i></a>
-                                                    <a href="{{ url_for('client_portal.download_document', id=doc.id, file_id=file.id) }}" class="btn btn-sm btn-light py-0 px-2" data-turbo="false" title="Download"><i class="bi bi-download"></i></a>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                                <a href="{{ url_for('client_portal.view_document', id=doc.id) }}" class="btn btn-sm btn-outline-primary py-1 px-3">
+                                    <i class="bi bi-files me-1"></i>View Files ({{ doc.files|length }})
+                                </a>
                             {% else %}
                                 <div class="d-inline-flex gap-1">
                                     <a href="{{ url_for('client_portal.preview_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-3" target="_blank">
@@ -160,7 +145,7 @@
                             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">FY {{ doc.financial_year }}</span>
                         </div>
                         <div class="text-muted small mb-2">
-                            {{ doc.created_at|ist('%b %d, %Y') }} · {{ (doc.file_size / 1024 / 1024) | round(2) }} MB
+                            {{ doc.created_at|ist('%b %d, %Y') }} · {{ ((doc.file_size or 0) / 1024 / 1024) | round(2) }} MB
                         </div>
                         {% if doc.tags %}
                         <div class="d-flex flex-wrap gap-1 mb-2">
@@ -172,24 +157,9 @@
                         
                         <div class="mt-2 text-end w-100">
                             {% if doc.files and doc.files|length > 1 %}
-                                <div class="dropdown d-inline-block">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle py-1 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-files me-1"></i>View Files ({{ doc.files|length }})
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                                        {% for file in doc.files %}
-                                        <li>
-                                            <div class="dropdown-item d-flex justify-content-between align-items-center gap-3">
-                                                <span class="text-truncate" style="max-width: 150px;" title="{{ file.name }}">{{ file.name }}</span>
-                                                <div class="d-flex gap-1">
-                                                    <a href="{{ url_for('client_portal.preview_document', id=doc.id, file_id=file.id) }}" class="btn btn-sm btn-light py-0 px-2" target="_blank" title="Preview"><i class="bi bi-eye"></i></a>
-                                                    <a href="{{ url_for('client_portal.download_document', id=doc.id, file_id=file.id) }}" class="btn btn-sm btn-light py-0 px-2" data-turbo="false" title="Download"><i class="bi bi-download"></i></a>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                                <a href="{{ url_for('client_portal.view_document', id=doc.id) }}" class="btn btn-sm btn-outline-primary py-1 px-3">
+                                    <i class="bi bi-files me-1"></i>View Files ({{ doc.files|length }})
+                                </a>
                             {% else %}
                                 <div class="d-inline-flex gap-1">
                                     <a href="{{ url_for('client_portal.preview_document', id=doc.id) }}" class="btn btn-sm btn-outline-secondary py-1 px-3" target="_blank">

@@ -18,7 +18,7 @@
             <div class="ca-card-body small">
                 <div class="mb-3">
                     <span class="text-muted d-block">Original Filename</span>
-                    <strong class="text-dark text-break">{{ document.original_filename }}</strong>
+                    <strong class="text-dark text-break">{{ document.title }}</strong>
                 </div>
                 <div class="mb-3">
                     <span class="text-muted d-block">Uploaded By</span>
@@ -30,7 +30,7 @@
                 </div>
                 <div class="mb-3">
                     <span class="text-muted d-block">File Size</span>
-                    <strong class="text-dark">{{ (document.file_size / 1024 / 1024) | round(2) }} MB</strong>
+                    <strong class="text-dark">{{ ((document.file_size or 0) / 1024 / 1024) | round(2) }} MB</strong>
                 </div>
                 <div class="mb-0">
                     <span class="text-muted d-block">SHA-256 Hash</span>
